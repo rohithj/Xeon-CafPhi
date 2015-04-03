@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link href='https://fonts.googleapis.com/css?family=Architects+Daughter' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
+
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <title>Xeon-Cafphi by rohithj</title>
+  </head>
+
+  <body>
+    <header>
+      <div class="inner">
+        <h1>Xeon-Cafphi</h1>
+        <h2>Caffe deep learning framework - optimized for Xeon Phi</h2>
+        <a href="https://github.com/rohithj/Xeon-CafPhi" class="button"><small>View project on</small> GitHub</a>
+      </div>
+    </header>
+
+    <div id="content-wrapper">
+      <div class="inner clearfix">
+        <section id="main-content">
+          <h2>
+<a id="summary" class="anchor" href="#summary" aria-hidden="true"><span class="octicon octicon-link"></span></a>Summary</h2>
+
+<p>Optimize Caffe deep learning framework on <a href="http://ark.intel.com/products/71992/Intel-Xeon-Phi-Coprocessor-5110P-8GB-1_053-GHz-60-core">Xeon Phi</a>. Optimization will be done by evaluating the performance of CIFAR-10 and MNIST data sets. We also plan to make a detailed analysis on the performance of Caffe on Xeon Phi (with and without GPU support).</p>
+
+<h2>
+<a id="background" class="anchor" href="#background" aria-hidden="true"><span class="octicon octicon-link"></span></a>Background</h2>
+
+<p><img src="http://deeplearning.net/tutorial/_images/mylenet.png" alt=""></p>
+
+<p>A convolutional neural network is currently a very famous Machine Learning algorithm which is used to classify data. It is especially used in computer vision to classify images with high accuracy. A convolutional neural network applied on an image has multiple axes of parallelism at the different layers of the propagation during the training and testing of the network.</p>
+
+<p>Each hidden layer has multiple feature maps, which are produced by convolving respective weights weighed over all the pixels of the previous layer’s feature maps and adding corresponding results. This convolution task is highly parallelisable. </p>
+
+<p>MaxPooling is a task of subsampling the image by taking the average or maximum amongst subparts of the images. This is done in order to avoid any variance. This task of down-sampling images is also highly parallelisable.</p>
+
+<p>Caffe is a framework written in C++ to implement this convolutional neural network, in order to utilise these axes of parallelism available. Caffe takes the convolutions, uses cblas library to turn them into a bunch of matrix multiplications and the uses CudaDNN with Nvidia GPUs to attain faster training speeds.</p>
+
+<h2>
+<a id="challenge" class="anchor" href="#challenge" aria-hidden="true"><span class="octicon octicon-link"></span></a>Challenge</h2>
+
+<p>Optimizing Caffe for Xeon Phi is hard as it is already optimized for both generic CPU and GPU. We intend to find specific parts of Caffe implementation that can be optimized to better use the features of Xeon Phi which will be challenging to find. This will require us to understand the existing parallelism support and find new parallelism or fine tune existing support to that of Xeon Phi. </p>
+
+<p>My partner and I have not used or worked with Caffe before and hence we will need to spend time to use and understand the code. Convolution implementation is done by transforming the input data to matrices and computation is done on these. We would need to understand and reimplement this feature to better utilize parallelism of Xeon Phi, which will be challenging.</p>
+
+<h2>
+<a id="resources" class="anchor" href="#resources" aria-hidden="true"><span class="octicon octicon-link"></span></a>Resources</h2>
+
+<p>Hardware: We will be using Latedays cluster machine that has Xeon Phi co-processor board. We will also be using our laptops to perform initial testing. 
+Software: Caffe software which comes with BSD 2-Clause license will be our starting point for this project. Test Data sets: CIFAR-10 and MNIST will also be required for evaluation.</p>
+
+<h2>
+<a id="goalsdeliverables" class="anchor" href="#goalsdeliverables" aria-hidden="true"><span class="octicon octicon-link"></span></a>Goals/Deliverables:</h2>
+
+<p>Primary goal is to understand and modify the Caffe codebase to best utilize all the resources available in Xeon Phi. We will be evaluating performance with CIFAR-10 and MNIST data sets and comparing the same with default Caffe code run on the same machine.</p>
+
+<p>Overall, we would like to gain information about performance benefits of optimizing Caffe on a powerful board such as Xeon Phi. We would also like to gain information about the performance drawbacks of running these optimized code on other machines such as our laptops.</p>
+
+<p>A possible extension is to explore the optimization of Caffe code with GPU support on Latedays cluster.</p>
+
+<h2>
+<a id="platforms" class="anchor" href="#platforms" aria-hidden="true"><span class="octicon octicon-link"></span></a>Platforms</h2>
+
+<p>We will be using the Linux posix threads framework and ISPC framework to parallelise the caffe implementation for the Xeon Phi processor of Latedays cluster. We will also consider OpenMPI to leverage other 14 cores on Latedays cluster.</p>
+
+<h2>
+<a id="schedule" class="anchor" href="#schedule" aria-hidden="true"><span class="octicon octicon-link"></span></a>Schedule</h2>
+
+<ul>
+<li>Friday, April 10: We shall port the caffe framework on Latedays Xeon Phi cluster and apply it to CIFAR10 dataset.</li>
+<li>Friday, April 17: Next we wish to switch on the GPU capability of Caffe and find means to measure its performance.</li>
+<li>We will time the implementation, recognise the the bottlenecks for both serial and GPU implementation of Caffe on latedays, also recognise opportunities of parallelism utilised by GPU matrix multiplication method.</li>
+<li>Friday, April 24: Decide on the implementation on XeonPhi via matrix multiplication or convolution. We will implement the Caffe CNN using ISPC on the XeonPhi. Optimise the implementation keeping in mind both the cache coherence and the bandwidth.</li>
+<li>Friday, May 1: We time our implementation, check for correctness and race the caffe CPU vs GPU implementation.</li>
+<li>Thursday, May 7: Buffer week. Add any additional features if time permits (Combining GPU and CPU features on Latedays cluster).</li>
+</ul>
+        </section>
+
+        <aside id="sidebar">
+          <a href="https://github.com/rohithj/Xeon-CafPhi/zipball/master" class="button">
+            <small>Download</small>
+            .zip file
+          </a>
+          <a href="https://github.com/rohithj/Xeon-CafPhi/tarball/master" class="button">
+            <small>Download</small>
+            .tar.gz file
+          </a>
+
+          <p class="repo-owner"><a href="https://github.com/rohithj/Xeon-CafPhi"></a> is maintained by <a href="https://github.com/rohithj">rohithj</a>.</p>
+
+          <p>This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the Architect theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.</p>
+        </aside>
+      </div>
+    </div>
+
+  
+  </body>
+</html>
