@@ -27,6 +27,11 @@ def main(argv):
         "output_file",
         help="Output npy filename."
     )
+    parser.add_argument(
+        "--print_results",
+        action='store_true',
+        help="Write output text to stdout rather than serializing to a file."
+    )
     # Optional arguments.
     parser.add_argument(
         "--model_def",
