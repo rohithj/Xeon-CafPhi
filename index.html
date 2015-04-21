@@ -35,19 +35,32 @@
 <a id="project-checkpoint" class="anchor" href="#project-checkpoint" aria-hidden="true"><span class="octicon octicon-link"></span></a>Project Checkpoint</h2>
 
 <p>We will first be implementing convolution serially and then parallelize the same. If the image in (width X Height) with depth D (Eg: RGB), then each location can be represented as patch of (K X K) which can be interpreted as (K X K X D) vector. M filters are then applied to such a patch. This can be accomplished using multiple for loops in the following format:
-    for w in Width
-        for h in Height
-            for i in 1..K
-                for j in 1..K
-                    for m in 1..M
-                        for d in 1..D
-                            output(w, h, d) += input(w+i, h+j, d) * filter(m, i, j, d)
-                        end
-                    end
-                end
-            end
-        end
-    end</p>
+<code>for w in Width</code></p>
+
+<pre><code>    `for h in Height`
+
+        `for i in 1..K`
+
+            `for j in 1..K`
+
+                `for m in 1..M`
+
+                    `for d in 1..D`
+
+                        `output(w, h, d) += input(w+i, h+j, d) * filter(m, i, j, d)`
+
+                    `end`
+
+                `end`
+
+            `end`
+
+        `end`
+
+    `end`
+
+`end`
+</code></pre>
 
 <p>We intend to parallelize this implementation by using ISPC, openMP and Pthreads and based on analysis determine which combination of choices at appropriate loops give us the best performance for MNIST and CIFAR-10 data sets. This will require detailed analysis and evaluation.</p>
 
