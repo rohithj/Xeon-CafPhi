@@ -31,16 +31,16 @@
     <!-- MAIN CONTENT -->
     <div id="main_content_wrap" class="outer">
       <section id="main_content" class="inner">
-        <h1>
-<a id="project-proposal" class="anchor" href="#project-proposal" aria-hidden="true"><span class="octicon octicon-link"></span></a>Project Proposal</h1>
+        <h2>
+<a id="project-proposal" class="anchor" href="#project-proposal" aria-hidden="true"><span class="octicon octicon-link"></span></a>Project Proposal</h2>
 
-<h2>
-<a id="summary" class="anchor" href="#summary" aria-hidden="true"><span class="octicon octicon-link"></span></a>Summary</h2>
+<h3>
+<a id="summary" class="anchor" href="#summary" aria-hidden="true"><span class="octicon octicon-link"></span></a>Summary</h3>
 
 <p>Optimize Caffe deep learning framework on <a href="http://ark.intel.com/products/71992/Intel-Xeon-Phi-Coprocessor-5110P-8GB-1_053-GHz-60-core">Xeon Phi</a>. Optimization will be done by evaluating the performance of CIFAR-10 and MNIST data sets. We also plan to make a detailed analysis on the performance of Caffe on Xeon Phi (with and without GPU support).</p>
 
-<h2>
-<a id="background" class="anchor" href="#background" aria-hidden="true"><span class="octicon octicon-link"></span></a>Background</h2>
+<h3>
+<a id="background" class="anchor" href="#background" aria-hidden="true"><span class="octicon octicon-link"></span></a>Background</h3>
 
 <p><img src="http://deeplearning.net/tutorial/_images/mylenet.png" alt=""></p>
 
@@ -52,21 +52,21 @@
 
 <p>Caffe is a framework written in C++ to implement this convolutional neural network, in order to utilise these axes of parallelism available. Caffe takes the convolutions, uses cblas library to turn them into a bunch of matrix multiplications and the uses CudaDNN with Nvidia GPUs to attain faster training speeds.</p>
 
-<h2>
-<a id="challenge" class="anchor" href="#challenge" aria-hidden="true"><span class="octicon octicon-link"></span></a>Challenge</h2>
+<h3>
+<a id="challenge" class="anchor" href="#challenge" aria-hidden="true"><span class="octicon octicon-link"></span></a>Challenge</h3>
 
 <p>Optimizing Caffe for Xeon Phi is hard as it is already optimized for both generic CPU and GPU. We intend to find specific parts of Caffe implementation that can be optimized to better use the features of Xeon Phi which will be challenging to find. This will require us to understand the existing parallelism support and find new parallelism or fine tune existing support to that of Xeon Phi. </p>
 
 <p>My partner and I have not used or worked with Caffe before and hence we will need to spend time to use and understand the code. Convolution implementation is done by transforming the input data to matrices and computation is done on these. We would need to understand and reimplement this feature to better utilize parallelism of Xeon Phi, which will be challenging.</p>
 
-<h2>
-<a id="resources" class="anchor" href="#resources" aria-hidden="true"><span class="octicon octicon-link"></span></a>Resources</h2>
+<h3>
+<a id="resources" class="anchor" href="#resources" aria-hidden="true"><span class="octicon octicon-link"></span></a>Resources</h3>
 
 <p>Hardware: We will be using Latedays cluster machine that has Xeon Phi co-processor board. We will also be using our laptops to perform initial testing. 
 Software: Caffe software which comes with BSD 2-Clause license will be our starting point for this project. Test Data sets: CIFAR-10 and MNIST will also be required for evaluation.</p>
 
-<h2>
-<a id="goalsdeliverables" class="anchor" href="#goalsdeliverables" aria-hidden="true"><span class="octicon octicon-link"></span></a>Goals/Deliverables:</h2>
+<h3>
+<a id="goalsdeliverables" class="anchor" href="#goalsdeliverables" aria-hidden="true"><span class="octicon octicon-link"></span></a>Goals/Deliverables:</h3>
 
 <p>Primary goal is to understand and modify the Caffe codebase to best utilize all the resources available in Xeon Phi. We will be evaluating performance with CIFAR-10 and MNIST data sets and comparing the same with default Caffe code run on the same machine.</p>
 
@@ -74,13 +74,13 @@ Software: Caffe software which comes with BSD 2-Clause license will be our start
 
 <p>A possible extension is to explore the optimization of Caffe code with GPU support on Latedays cluster.</p>
 
-<h2>
-<a id="platforms" class="anchor" href="#platforms" aria-hidden="true"><span class="octicon octicon-link"></span></a>Platforms</h2>
+<h3>
+<a id="platforms" class="anchor" href="#platforms" aria-hidden="true"><span class="octicon octicon-link"></span></a>Platforms</h3>
 
 <p>We will be using the Linux posix threads framework and ISPC framework to parallelise the caffe implementation for the Xeon Phi processor of Latedays cluster. We will also consider OpenMPI to leverage other 14 cores on Latedays cluster.</p>
 
-<h2>
-<a id="schedule" class="anchor" href="#schedule" aria-hidden="true"><span class="octicon octicon-link"></span></a>Schedule</h2>
+<h3>
+<a id="schedule" class="anchor" href="#schedule" aria-hidden="true"><span class="octicon octicon-link"></span></a>Schedule</h3>
 
 <ul>
 <li>Friday, April 10: We shall port the caffe framework on Latedays Xeon Phi cluster and apply it to CIFAR10 dataset.</li>
