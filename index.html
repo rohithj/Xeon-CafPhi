@@ -32,6 +32,32 @@
     <div id="main_content_wrap" class="outer">
       <section id="main_content" class="inner">
         <h2>
+<a id="project-checkpoint" class="anchor" href="#project-checkpoint" aria-hidden="true"><span class="octicon octicon-link"></span></a>Project Checkpoint</h2>
+
+<p>We will first be implementing convolution serially and then parallelize the same. If the image in (width X Height) with depth D (Eg: RGB), then each location can be represented as patch of (K X K) which can be interpreted as (K X K X D) vector. M filters are then applied to such a patch. This can be accomplished using multiple for loops in the following format:
+    for w in Width
+        for h in Height
+            for i in 1..K
+                for j in 1..K
+                    for m in 1..M
+                        for d in 1..D
+                            output(w, h, d) += input(w+i, h+j, d) * filter(m, i, j, d)
+                        end
+                    end
+                end
+            end
+        end
+    end</p>
+
+<p>We intend to parallelize this implementation by using ISPC, openMP and Pthreads and based on analysis determine which combination of choices at appropriate loops give us the best performance for MNIST and CIFAR-10 data sets. This will require detailed analysis and evaluation.</p>
+
+<p><a href="https://github.com/Yangqing/caffe/wiki/Convolution-in-Caffe:-a-memo">Convolution in Caffe</a></p>
+
+<p><a href="http://yann.lecun.com/exdb/lenet/">LeNet-5, convolutional neural networks</a></p>
+
+<p><a href="http://www.wikiwand.com/en/Convolution">Convolution in Wikipedia</a></p>
+
+<h2>
 <a id="project-proposal" class="anchor" href="#project-proposal" aria-hidden="true"><span class="octicon octicon-link"></span></a>Project Proposal</h2>
 
 <h3>
@@ -83,12 +109,15 @@ Software: Caffe software which comes with BSD 2-Clause license will be our start
 <a id="schedule" class="anchor" href="#schedule" aria-hidden="true"><span class="octicon octicon-link"></span></a>Schedule</h3>
 
 <ul>
-<li>Friday, April 10: We shall port the caffe framework on Latedays Xeon Phi cluster and apply it to CIFAR10 dataset.</li>
-<li>Friday, April 17: Next we wish to switch on the GPU capability of Caffe and find means to measure its performance.</li>
-<li>We will time the implementation, recognise the the bottlenecks for both serial and GPU implementation of Caffe on latedays, also recognise opportunities of parallelism utilised by GPU matrix multiplication method.</li>
-<li>Friday, April 24: Decide on the implementation on XeonPhi via matrix multiplication or convolution. We will implement the Caffe CNN using ISPC on the XeonPhi. Optimise the implementation keeping in mind both the cache coherence and the bandwidth.</li>
-<li>Friday, May 1: We time our implementation, check for correctness and race the caffe CPU vs GPU implementation.</li>
-<li>Thursday, May 7: Buffer week. Add any additional features if time permits (Combining GPU and CPU features on Latedays cluster).</li>
+<li>Friday, April 10: Setup environment to run Caffe on our personal systems on a VM. Run caffe framework on MNIST and CIFAR10 dataset and gather performance results.</li>
+<li>Friday, April 17: Analyse the Caffe code to understand the operations done for MNIST and CIFAR-10 data sets.
+** Based on analysis find alternative implementation of Matrix multiplication and frame an outline for Convolution implementation.</li>
+<li>Friday, April 24: Run Caffe code on Xeon-Phi on latedays and gather performance results.
+** Implement and run serial implementation of Convolution on Xeon-Phi. We will time the implementation, recognise the the bottlenecks and improve the implementation. We also intend to find other regions of code that can be parallelized.</li>
+<li>Friday, May 1: Parallelize the Convolution implementation and measure performance. We intend to evaluate by using combination of ISPC, OpenMP and pthreads wherever applicable and evaluate the performance. 
+** Optimise the implementation keeping in mind both the cache coherence and the bandwidth.</li>
+<li>Friday, May 7: We time our implementation, check for correctness and race the caffe CPU vs GPU implementation.
+** If time permits recognise opportunities of parallelism utilised by GPU matrix multiplication method and  try to combine GPU and CPU features on Latedays cluster.</li>
 </ul>
       </section>
     </div>
