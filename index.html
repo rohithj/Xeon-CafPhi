@@ -33,10 +33,12 @@
       <section id="main_content" class="inner">
         <p>Optimize Caffe deep learning framework on <a href="http://ark.intel.com/products/71992/Intel-Xeon-Phi-Coprocessor-5110P-8GB-1_053-GHz-60-core">Xeon Phi</a>. Optimization will be done by evaluating the performance of CIFAR-10 and MNIST data sets. We also plan to make a detailed analysis on the performance of Caffe on Xeon Phi (with and without GPU support).</p>
 
+<hr>
+
 <h2>
 <a id="project-checkpoint" class="anchor" href="#project-checkpoint" aria-hidden="true"><span class="octicon octicon-link"></span></a>Project Checkpoint</h2>
 
-<p>We have completed the Integration and analysis of Caffe on our local machines. We are on track with the plan but are behind on evaluating the same on Xeon-Phi on Latedays. We recently got access to the same and will evaluate this in priority.</p>
+<p>We have completed the Integration and analysis of Caffe on our local machines. We are on track with the plan but are behind on evaluating the same on Xeon-Phi on Latedays. We recently got access to the same and will evaluate this in priority. Hence the schedule is modified slightly.</p>
 
 <p>We have benchmarked the Caffe with out of the box CPU implementation in the following configuration:
 64-bit Ubuntu-14.04 Linux Virtual machine:
@@ -47,8 +49,9 @@ Video Memory: 48 MB</p>
 <p>MNIST =&gt; 5.5 seconds/100 iterations
 CIFAR-10 =&gt; 25.6 seconds/100 iterations</p>
 
-<p><strong>Caffe Implementation of Convolution Layer:</strong>
-Caffe implements the convolution of different filters over images in the form of matrix multiplication, it converts the convolutions into a set of matrix multiplications.</p>
+<p><strong>Caffe Implementation of Convolution Layer:</strong></p>
+
+<p>Caffe implements the convolution of different filters over images in the form of matrix multiplication, it converts the convolutions into a set of matrix multiplications.</p>
 
 <p>Convolution is usually done using a sliding window approach, it is an operation where the filter is applied to each pixel and its neighbours and we get the response at that pixel by adding the multiplication of the corresponding elements at that pixel.</p>
 
@@ -81,8 +84,9 @@ Where the image is WxH size and filter is KXK size
 
 <p>The major drawback is having to put these column images in RAM which costs time to transfer to GPU and even takes up shared space.</p>
 
-<p><strong>Our implementation:</strong>
-We will parallelise the for loops which should save space and we wish to do this for latedays’ XeonPhi processor. We wish to implement the convolution iteratively which the author didn’t do.</p>
+<p><strong>Our implementation:</strong></p>
+
+<p>We will parallelise the for loops which should save space and we wish to do this for latedays’ XeonPhi processor. We wish to implement the convolution iteratively which the author didn’t do.</p>
 
 <p>We will first be implementing convolution serially and then parallelize the same. If the image in (width X Height) with depth D (Eg: RGB), then each location can be represented as patch of (K X K) which can be interpreted as (K X K X D) vector. M filters are then applied to such a patch. This can be accomplished using multiple for loops in the following format:</p>
 
@@ -104,9 +108,11 @@ end
 <p>We intend to parallelize this implementation by using ISPC, openMP and Pthreads and based on analysis determine which combination of choices at appropriate loops give us the best performance for MNIST and CIFAR-10 data sets. This will require detailed analysis and evaluation.</p>
 
 <p>Following references helped us analyze and understand convolution:
-<a href="https://github.com/Yangqing/caffe/wiki/Convolution-in-Caffe:-a-memo">Convolution in Caffe</a>
-<a href="http://yann.lecun.com/exdb/lenet/">LeNet-5, convolutional neural networks</a>
-<a href="http://www.wikiwand.com/en/Convolution">Convolution in Wikipedia</a></p>
+<a href="https://github.com/Yangqing/caffe/wiki/Convolution-in-Caffe:-a-memo">Convolution in Caffe</a></p>
+
+<p><a href="http://yann.lecun.com/exdb/lenet/">LeNet-5, convolutional neural networks</a></p>
+
+<p><a href="http://www.wikiwand.com/en/Convolution">Convolution in Wikipedia</a></p>
 
 <hr>
 
