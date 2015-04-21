@@ -52,18 +52,16 @@ Video Memory: 48 MB</p>
 
 <p>CIFAR-10 =&gt; 25.6 seconds/100 iterations</p>
 
-<h2>
-<a id="analysis-caffe-implementation-of-convolution-layer" class="anchor" href="#analysis-caffe-implementation-of-convolution-layer" aria-hidden="true"><span class="octicon octicon-link"></span></a>Analysis: Caffe Implementation of Convolution Layer</h2>
+<h3>
+<a id="analysis-caffe-implementation-of-convolution-layer" class="anchor" href="#analysis-caffe-implementation-of-convolution-layer" aria-hidden="true"><span class="octicon octicon-link"></span></a>Analysis: Caffe Implementation of Convolution Layer</h3>
 
 <p>Caffe implements the convolution of different filters over images in the form of matrix multiplication, it converts the convolutions into a set of matrix multiplications.</p>
 
 <p>Convolution is usually done using a sliding window approach, it is an operation where the filter is applied to each pixel and its neighbours and we get the response at that pixel by adding the multiplication of the corresponding elements at that pixel.</p>
 
-<p><img src="http://upload.wikimedia.org/wikipedia/commons/6/6a/Convolution_of_box_signal_with_itself2.gif" alt="">
-<strong>Convolution in 1-D</strong></p>
+<p><img src="http://upload.wikimedia.org/wikipedia/commons/6/6a/Convolution_of_box_signal_with_itself2.gif" alt="Convolution in 1-D"></p>
 
-<p><img src="http://upload.wikimedia.org/wikipedia/commons/b/b9/Convolution_of_spiky_function_with_box2.gif" alt="">
-<strong>Convolution in 1-D</strong></p>
+<p><img src="http://upload.wikimedia.org/wikipedia/commons/b/b9/Convolution_of_spiky_function_with_box2.gif" alt="Convolution in 1-D"></p>
 
 <p>Thus it is an iterative operation where we have multiple for loops</p>
 
@@ -80,16 +78,16 @@ end
 Where the image is WxH size and filter is KXK size
 </code></pre>
 
-<p>The implementor of caffe was not GPU savvy yet he wished to have his convolution run on a GPU and leverage its many cores to achieve a speedup and train his neural networks faster. Since he couldn’t easily parallelize the for loops easily, he accomplished this by using a utility much like matlab’s im2col which changes an input 2d array into a set of columns. Each column has the window instance of image and the filter is also represented as columns and then he uses matrix multiplication to get the output.</p>
+<p>The implementer of Caffe was not GPU savvy yet he wished to have his convolution run on a GPU and leverage its many cores to achieve a speed-up and train his neural networks faster. Since he couldn’t easily parallelize the for loops easily, he accomplished this by using a utility much like Matlab’s im2col which changes an input 2d array into a set of columns. Each column has the window instance of image and the filter is also represented as columns and then he uses matrix multiplication to get the output.</p>
 
-<p>Of course he pads the image appropriately as per mask size, which you will see if you look at layers in caffe (5x5 filters have a padding of 2 on the image).</p>
+<p>Of course he pads the image appropriately as per mask size, which you will see if you look at layers in Caffe (5x5 filters have a padding of 2 on the image).</p>
 
 <p>CBlas libraries are already available optimised for the matrix multiplication and then col2im is applied back to the matrix multiplication output and we get the convolved image.</p>
 
 <p>The major drawback is having to put these column images in RAM which costs time to transfer to GPU and even takes up shared space.</p>
 
-<h2>
-<a id="our-design" class="anchor" href="#our-design" aria-hidden="true"><span class="octicon octicon-link"></span></a>Our Design</h2>
+<h3>
+<a id="our-design" class="anchor" href="#our-design" aria-hidden="true"><span class="octicon octicon-link"></span></a>Our Design</h3>
 
 <p>We will parallelise the for loops which should save space and we wish to do this for latedays’ XeonPhi processor. We wish to implement the convolution iteratively which the author didn’t do.</p>
 
