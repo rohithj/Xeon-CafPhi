@@ -36,6 +36,134 @@
 <h2>
 <a id="project-checkpoint" class="anchor" href="#project-checkpoint" aria-hidden="true"><span class="octicon octicon-link"></span></a>Project Checkpoint</h2>
 
+<p>Caffe Implementation of Convolution Layer:</p>
+
+<p>Caffe implements the convolution of different filters over images in the form of matrix multiplication, it converts the convolutions into a set of matrix multiplications.</p>
+
+<p>Convolution is usually done using a sliding window approach, it is an operation where the filter is applied to each pixel and its neighbours and we get the response at that pixel by adding the multiplication of the corresponding elements at that pixel.</p>
+
+<p>Thus it is an iterative operation where we have multiple for loops</p>
+
+<p>for w in 1..W
+  for h in 1..H
+    for x in 1..K
+      for y in 1..K
+          output(w, h) += input(w+x, h+y) * filter(x, y)
+      end
+    end
+  end
+end
+Where the image is WxH size and filter is KXK size</p>
+
+<p>The implementor of caffe was not GPU savvy yet he wished to have his convolution run on a GPU and leverage its many cores to achieve a speedup and train his neural networks faster.</p>
+
+<p>Since he couldn’t easily parallelize the for loops easily, he accomplished this by using a utility much like matlab’s im2col which changes an input 2d array into a set of columns. Each column has the window instance of image and the filter is also represented as columns and then he uses matrix multiplication to get the output.</p>
+
+<p>Of course he pads the image appropriately as per mask size, which you will see if you look at layers in caffe (5x5 filters have a padding of 2 on the image).</p>
+
+<p>CBlas libraries are already available optimised for the matrix multiplication and then col2im is applied back to the matrix multiplication output and we get the convolved image.</p>
+
+<p>The major drawback is having to put these column images in RAM which costs time to transfer to GPU and even takes up shared space.</p>
+
+<p>We will parallelise the for loops which should save space and we wish to do this for latedays’ XeonPhi processor. We wish to implement the convolution iteratively which the author didn’t do.</p>
+
+<p>As explanation, we prepared a matlab example of convolving a 3x3 image with a 3x3 filter to induce blurring. The convolution is performed using matrix multiplication just like caffe implementation.</p>
+
+<blockquote>
+<blockquote>
+<p>image = reshape(linspace(0,1,9),[3 3])'</p>
+</blockquote>
+</blockquote>
+
+<p>image =</p>
+
+<pre><code>     0        0.1250    0.2500
+0.3750    0.5000    0.6250
+0.7500    0.8750    1.0000
+</code></pre>
+
+<blockquote>
+<blockquote>
+<p>padded_image = padarray(image,[1 1])</p>
+</blockquote>
+</blockquote>
+
+<p>padded_image =</p>
+
+<pre><code>     0         0           0             0             0
+     0         0           0.1250    0.2500    0
+     0         0.3750  0.5000    0.6250    0
+     0         0.7500  0.8750    1.0000    0
+     0         0           0             0             0
+</code></pre>
+
+<blockquote>
+<blockquote>
+<p>columnwise_image = im2col(padded_image,[3 3])</p>
+</blockquote>
+</blockquote>
+
+<p>columnwise_image =</p>
+
+<pre><code>     0             0            0             0           0           0.3750  0          0.1250     0.5000
+     0             0            0             0           0.3750  0.7500  0.1250 0.5000     0.8750
+     0             0            0             0.3750  0.7500  0           0.5000 0.8750     0
+     0             0            0.3750    0           0.1250  0.5000  0          0.2500     0.6250
+     0             0.3750   0.7500    0.1250  0.5000  0.8750  0.2500 0.6250     1.0000
+     0.3750    0.7500   0             0.5000  0.8750  0           0.6250 1.0000     0
+     0             0.1250   0.5000    0           0.2500  0.6250  0          0              0
+     0.1250    0.5000   0.8750    0.2500  0.6250  1.0000  0          0              0
+     0.5000    0.8750   0             0.6250  1.0000  0           0          0              0
+</code></pre>
+
+<blockquote>
+<blockquote>
+<p>filter = [1/9 1/9 1/9; 1/9 1/9 1/9; 1/9 1/9 1/9;]</p>
+</blockquote>
+</blockquote>
+
+<p>filter =</p>
+
+<pre><code>0.1111    0.1111    0.1111
+0.1111    0.1111    0.1111
+0.1111    0.1111    0.1111
+</code></pre>
+
+<blockquote>
+<blockquote>
+<p>columnwise_filter = im2col(filter,[1 1])</p>
+</blockquote>
+</blockquote>
+
+<p>columnwise_filter =</p>
+
+<pre><code>0.1111    0.1111    0.1111    0.1111    0.1111    0.1111    0.1111    0.1111    0.1111
+</code></pre>
+
+<blockquote>
+<blockquote>
+<p>filter_response = columnwise_filter * columnwise_image</p>
+</blockquote>
+</blockquote>
+
+<p>filter_response =</p>
+
+<pre><code>0.1111    0.2917    0.2778    0.2083    0.5000    0.4583    0.1667    0.3750    0.3333
+</code></pre>
+
+<blockquote>
+<blockquote>
+<p>convolved_image = col2im(filter_response,[1 1],[3 3])</p>
+</blockquote>
+</blockquote>
+
+<p>convolved_image =</p>
+
+<pre><code>0.1111    0.2083    0.1667
+0.2917    0.5000    0.3750
+0.2778    0.4583    0.3333
+</code></pre>
+
 <p>We will first be implementing convolution serially and then parallelize the same. If the image in (width X Height) with depth D (Eg: RGB), then each location can be represented as patch of (K X K) which can be interpreted as (K X K X D) vector. M filters are then applied to such a patch. This can be accomplished using multiple for loops in the following format:</p>
 
 <pre><code>for w in Width
