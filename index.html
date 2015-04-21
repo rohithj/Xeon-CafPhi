@@ -1,28 +1,51 @@
 <!DOCTYPE html>
-<html lang="en-us">
-  <head>
-    <meta charset="UTF-8">
-    <title>Xeon-CafPhi by rohithj</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
-    <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
-    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
-  </head>
-  <body>
-    <section class="page-header">
-      <h1 class="project-name">Xeon-CafPhi</h1>
-      <h2 class="project-tagline">Caffe deep learning framework - optimized for Xeon Phi</h2>
-      <a href="https://github.com/rohithj/Xeon-CafPhi" class="btn">View on GitHub</a>
-      <a href="https://github.com/rohithj/Xeon-CafPhi/zipball/master" class="btn">Download .zip</a>
-      <a href="https://github.com/rohithj/Xeon-CafPhi/tarball/master" class="btn">Download .tar.gz</a>
-    </section>
+<html>
 
-    <section class="main-content">
-      <p>Optimize Caffe deep learning framework on <a href="http://ark.intel.com/products/71992/Intel-Xeon-Phi-Coprocessor-5110P-8GB-1_053-GHz-60-core">Xeon Phi</a>. Optimization will be done by evaluating the performance of CIFAR-10 and MNIST data sets. We also plan to make a detailed analysis on the performance of Caffe on Xeon Phi (with and without GPU support).</p>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="Xeon-CafPhi : Caffe deep learning framework - optimized for Xeon Phi">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Xeon-CafPhi</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/rohithj/Xeon-CafPhi">View on GitHub</a>
+
+          <h1 id="project_title">Xeon-CafPhi</h1>
+          <h2 id="project_tagline">Caffe deep learning framework - optimized for Xeon Phi</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/rohithj/Xeon-CafPhi/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/rohithj/Xeon-CafPhi/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <p>Optimize Caffe deep learning framework on <a href="http://ark.intel.com/products/71992/Intel-Xeon-Phi-Coprocessor-5110P-8GB-1_053-GHz-60-core">Xeon Phi</a>. Optimization will be done by evaluating the performance of CIFAR-10 and MNIST data sets. We also plan to make a detailed analysis on the performance of Caffe on Xeon Phi (with and without GPU support).</p>
 
 <h2>
 <a id="project-checkpoint" class="anchor" href="#project-checkpoint" aria-hidden="true"><span class="octicon octicon-link"></span></a>Project Checkpoint</h2>
+
+<p>We have completed the Integration and analysis of Caffe on our local machines. We are on track with the plan but are behind on evaluating the same on Xeon-Phi on Latedays. We recently got access to the same and will evaluate this in priority.</p>
+
+<p>We have benchmarked the Caffe with out of the box CPU implementation in the following configuration:
+64-bit Ubuntu-14.04 Linux Virtual machine:
+RAM: 8192 MB
+Processors: 4
+Video Memory: 48 MB</p>
+
+<p>MNIST =&gt; 5.5 seconds/100 iterations
+CIFAR-10 =&gt; 25.6 seconds/100 iterations</p>
 
 <p>Caffe Implementation of Convolution Layer:</p>
 
@@ -33,13 +56,8 @@
 <p><img src="http://upload.wikimedia.org/wikipedia/commons/6/6a/Convolution_of_box_signal_with_itself2.gif" alt="">
 Convolution in 1-D</p>
 
-<p>BLAH</p>
-
 <p><img src="http://upload.wikimedia.org/wikipedia/commons/b/b9/Convolution_of_spiky_function_with_box2.gif" alt="">
 Convolution in 1-D</p>
-
-<p>BLAH BLAH
-<img src="https://www.dropbox.com/s/ah04wqp8rsvgr7k/output_0pvazN.gif?dl=0" alt=""></p>
 
 <p>Thus it is an iterative operation where we have multiple for loops</p>
 
@@ -56,9 +74,7 @@ end
 
 <p>Where the image is WxH size and filter is KXK size</p>
 
-<p>The implementor of caffe was not GPU savvy yet he wished to have his convolution run on a GPU and leverage its many cores to achieve a speedup and train his neural networks faster.</p>
-
-<p>Since he couldn’t easily parallelize the for loops easily, he accomplished this by using a utility much like matlab’s im2col which changes an input 2d array into a set of columns. Each column has the window instance of image and the filter is also represented as columns and then he uses matrix multiplication to get the output.</p>
+<p>The implementor of caffe was not GPU savvy yet he wished to have his convolution run on a GPU and leverage its many cores to achieve a speedup and train his neural networks faster. Since he couldn’t easily parallelize the for loops easily, he accomplished this by using a utility much like matlab’s im2col which changes an input 2d array into a set of columns. Each column has the window instance of image and the filter is also represented as columns and then he uses matrix multiplication to get the output.</p>
 
 <p>Of course he pads the image appropriately as per mask size, which you will see if you look at layers in caffe (5x5 filters have a padding of 2 on the image).</p>
 
@@ -140,27 +156,27 @@ Software: Caffe software which comes with BSD 2-Clause license will be our start
 <h3>
 <a id="schedule" class="anchor" href="#schedule" aria-hidden="true"><span class="octicon octicon-link"></span></a>Schedule</h3>
 
-<ul>
-<li>Friday, April 10: Setup environment to run Caffe on our personal systems on a VM. Run caffe framework on MNIST and CIFAR10 dataset and gather performance results.</li>
-<li>Friday, April 17: Analyse the Caffe code to understand the operations done for MNIST and CIFAR-10 data sets.
-** Based on analysis find alternative implementation of Matrix multiplication and frame an outline for Convolution implementation.</li>
-<li>Friday, April 24: Run Caffe code on Xeon-Phi on latedays and gather performance results.
-** Implement and run serial implementation of Convolution on Xeon-Phi. We will time the implementation, recognise the the bottlenecks and improve the implementation. We also intend to find other regions of code that can be parallelized.</li>
-<li>Friday, May 1: Parallelize the Convolution implementation and measure performance. We intend to evaluate by using combination of ISPC, OpenMP and pthreads wherever applicable and evaluate the performance. 
-** Optimise the implementation keeping in mind both the cache coherence and the bandwidth.</li>
-<li>Friday, May 7: We time our implementation, check for correctness and race the caffe CPU vs GPU implementation.
-** If time permits recognise opportunities of parallelism utilised by GPU matrix multiplication method and  try to combine GPU and CPU features on Latedays cluster.</li>
-</ul>
+<p>Friday, April 10: Setup environment to run Caffe on our personal systems on a VM. Run caffe framework on MNIST and CIFAR10 dataset and gather performance results.
+Friday, April 17: Analyse the Caffe code to understand the operations done for MNIST and CIFAR-10 data sets.
+Based on analysis find alternative implementation of Matrix multiplication and frame an outline for Convolution implementation.
+Friday, April 24: Run Caffe code on Xeon-Phi on latedays and gather performance results.
+Implement and run serial implementation of Convolution on Xeon-Phi. We will time the implementation, recognise the the bottlenecks and improve the implementation. We also intend to find other regions of code that can be parallelized.
+Friday, May 1: Parallelize the Convolution implementation and measure performance. We intend to evaluate by using combination of ISPC, OpenMP and pthreads wherever applicable and evaluate the performance. 
+Optimise the implementation keeping in mind both the cache coherence and the bandwidth.
+Friday, May 7: We time our implementation, check for correctness and race the caffe CPU vs GPU implementation.
+If time permits recognise opportunities of parallelism utilised by GPU matrix multiplication method and  try to combine GPU and CPU features on Latedays cluster.</p>
+      </section>
+    </div>
 
-      <footer class="site-footer">
-        <span class="site-footer-owner"><a href="https://github.com/rohithj/Xeon-CafPhi">Xeon-CafPhi</a> is maintained by <a href="https://github.com/rohithj">rohithj</a>.</span>
-
-        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Xeon-CafPhi maintained by <a href="https://github.com/rohithj">rohithj</a></p>
+        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
       </footer>
+    </div>
 
-    </section>
+    
 
-  
   </body>
 </html>
-
