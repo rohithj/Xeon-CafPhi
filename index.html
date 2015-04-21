@@ -19,39 +19,42 @@
     </section>
 
     <section class="main-content">
-      <h2>
+      <p>Optimize Caffe deep learning framework on <a href="http://ark.intel.com/products/71992/Intel-Xeon-Phi-Coprocessor-5110P-8GB-1_053-GHz-60-core">Xeon Phi</a>. Optimization will be done by evaluating the performance of CIFAR-10 and MNIST data sets. We also plan to make a detailed analysis on the performance of Caffe on Xeon Phi (with and without GPU support).</p>
+
+<blockquote>
+<p>Project Proposal
+Project Checkpoint</p>
+</blockquote>
+
+<h2>
 <a id="project-checkpoint" class="anchor" href="#project-checkpoint" aria-hidden="true"><span class="octicon octicon-link"></span></a>Project Checkpoint</h2>
 
-<p>We will first be implementing convolution serially and then parallelize the same. If the image in (width X Height) with depth D (Eg: RGB), then each location can be represented as patch of (K X K) which can be interpreted as (K X K X D) vector. M filters are then applied to such a patch. This can be accomplished using multiple for loops in the following format:
-    <code>for w in Width
-      for h in Height
-        for i in 1..K
-          for j in 1..K
-            for m in 1..M
-              for d in 1..D
-                output(w, h, d) += input(w+i, h+j, d) * filter(m, i, j, d)
-              end
-            end
+<p>We will first be implementing convolution serially and then parallelize the same. If the image in (width X Height) with depth D (Eg: RGB), then each location can be represented as patch of (K X K) which can be interpreted as (K X K X D) vector. M filters are then applied to such a patch. This can be accomplished using multiple for loops in the following format:</p>
+
+<pre><code>for w in Width
+  for h in Height
+    for i in 1..K
+      for j in 1..K
+        for m in 1..M
+          for d in 1..D
+            output(w, h, d) += input(w+i, h+j, d) * filter(m, i, j, d)
           end
         end
       end
-    end</code></p>
+    end
+  end
+end
+</code></pre>
 
 <p>We intend to parallelize this implementation by using ISPC, openMP and Pthreads and based on analysis determine which combination of choices at appropriate loops give us the best performance for MNIST and CIFAR-10 data sets. This will require detailed analysis and evaluation.</p>
 
-<p><a href="https://github.com/Yangqing/caffe/wiki/Convolution-in-Caffe:-a-memo">Convolution in Caffe</a></p>
-
-<p><a href="http://yann.lecun.com/exdb/lenet/">LeNet-5, convolutional neural networks</a></p>
-
-<p><a href="http://www.wikiwand.com/en/Convolution">Convolution in Wikipedia</a></p>
+<p>Following references helped us analyze and understand convolution:
+<a href="https://github.com/Yangqing/caffe/wiki/Convolution-in-Caffe:-a-memo">Convolution in Caffe</a>
+<a href="http://yann.lecun.com/exdb/lenet/">LeNet-5, convolutional neural networks</a>
+<a href="http://www.wikiwand.com/en/Convolution">Convolution in Wikipedia</a></p>
 
 <h2>
 <a id="project-proposal" class="anchor" href="#project-proposal" aria-hidden="true"><span class="octicon octicon-link"></span></a>Project Proposal</h2>
-
-<h3>
-<a id="summary" class="anchor" href="#summary" aria-hidden="true"><span class="octicon octicon-link"></span></a>Summary</h3>
-
-<p>Optimize Caffe deep learning framework on <a href="http://ark.intel.com/products/71992/Intel-Xeon-Phi-Coprocessor-5110P-8GB-1_053-GHz-60-core">Xeon Phi</a>. Optimization will be done by evaluating the performance of CIFAR-10 and MNIST data sets. We also plan to make a detailed analysis on the performance of Caffe on Xeon Phi (with and without GPU support).</p>
 
 <h3>
 <a id="background" class="anchor" href="#background" aria-hidden="true"><span class="octicon octicon-link"></span></a>Background</h3>
