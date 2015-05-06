@@ -59,6 +59,9 @@ void BasePrefetchingDataLayer<Dtype>::JoinPrefetchThread() {
 template <typename Dtype>
 void BasePrefetchingDataLayer<Dtype>::Forward_cpu(
     const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
+#ifdef XEON_PHI_DEBUG  
+  LOG(INFO) << "Forward_cpu in BasePrefetchDataLayer";
+#endif
   // First, join the thread
   JoinPrefetchThread();
   DLOG(INFO) << "Thread joined";

@@ -43,6 +43,9 @@ void HDF5OutputLayer<Dtype>::SaveBlobs() {
 template <typename Dtype>
 void HDF5OutputLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top) {
+#ifdef XEON_PHI_DEBUG  
+  LOG(INFO) << "Forward_cpu in HDF5OutputLayer";
+#endif
   CHECK_GE(bottom.size(), 2);
   CHECK_EQ(bottom[0]->num(), bottom[1]->num());
   data_blob_.Reshape(bottom[0]->num(), bottom[0]->channels(),

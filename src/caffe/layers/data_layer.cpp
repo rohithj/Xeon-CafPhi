@@ -49,6 +49,9 @@ void DataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
   }
   // image
   int crop_size = this->layer_param_.transform_param().crop_size();
+#ifdef XEON_PHI_DEBUG  
+  LOG(INFO) << "XEON: crop_size:" << crop_size;
+#endif
   if (crop_size > 0) {
     top[0]->Reshape(this->layer_param_.data_param().batch_size(),
         datum.channels(), crop_size, crop_size);

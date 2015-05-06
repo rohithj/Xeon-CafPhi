@@ -291,6 +291,21 @@ ifeq ($(CPU_ONLY), 1)
 	COMMON_FLAGS += -DCPU_ONLY
 endif
 
+# Run code on xeon phi
+ifeq ($(XEON_PHI), 1)
+	COMMON_FLAGS += -DXEON_PHI
+endif
+
+# Enable debug for code on xeon phi
+ifeq ($(XEON_PHI_ESSENTIAL_DEBUG), 1)
+	COMMON_FLAGS += -DXEON_PHI_ESSENTIAL_DEBUG
+endif
+
+# Enable debug for code on xeon phi
+ifeq ($(XEON_PHI_DEBUG), 1)
+	COMMON_FLAGS += -DXEON_PHI_DEBUG
+endif
+
 # Python layer support
 ifeq ($(WITH_PYTHON_LAYER), 1)
 	COMMON_FLAGS += -DWITH_PYTHON_LAYER

@@ -19,7 +19,27 @@ void ConvolutionLayer<Dtype>::compute_output_shape() {
 template <typename Dtype>
 void ConvolutionLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top) {
+#ifdef XEON_PHI_ESSENTIAL_DEBUG
+  LOG(INFO) << "XEON conv_layer.cpp: Forward_cpu";
+#endif
   const Dtype* weight = this->blobs_[0]->cpu_data();
+#ifdef XEON_PHI
+  for(int i = 0; i < bottom.size(); ++i) {
+    const Dtype* bottom_data = bottom[i]->cpu_data();
+    Dtype* top_data = top[i]->mutable_cpu_data();
+
+    for(int n = 0; n < this->num_; ++n) {
+      /* Forward convolution */
+      this->forward_convolution(bottom_data +
+	bottom[i]->offset(n), weight, top_data + top[i]->offset(n));
+      
+      if(this->bias_term_) {
+	const Dtype* bias = this->blobs_[1]->cpu_data();
+	this->forward_bias(top_data + top[i]->offset(n), bias);
+      }
+    }
+  }
+#else
   for (int i = 0; i < bottom.size(); ++i) {
     const Dtype* bottom_data = bottom[i]->cpu_data();
     Dtype* top_data = top[i]->mutable_cpu_data();
@@ -32,6 +52,7 @@ void ConvolutionLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       }
     }
   }
+#endif
 }
 
 template <typename Dtype>

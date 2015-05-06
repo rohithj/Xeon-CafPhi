@@ -64,7 +64,7 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
     const int layer_id = -1;  // inputs have fake layer ID -1
     AppendTop(param, layer_id, input_id, &available_blobs, &blob_name_to_idx);
   }
-  DLOG(INFO) << "Memory required for data: " << memory_used_ * sizeof(Dtype);
+  DLOG(INFO) << "XEON: Memory required for data: " << memory_used_ * sizeof(Dtype);
   // For each layer, set up its input and output
   bottom_vecs_.resize(param.layer_size());
   top_vecs_.resize(param.layer_size());
@@ -123,7 +123,7 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
       }
       memory_used_ += top_vecs_[layer_id][top_id]->count();
     }
-    DLOG(INFO) << "Memory required for data: " << memory_used_ * sizeof(Dtype);
+    DLOG(INFO) << " XEON: Memory required for data: " << memory_used_ * sizeof(Dtype);
     const int param_size = layer_param.param_size();
     const int num_param_blobs = layers_[layer_id]->blobs().size();
     CHECK_LE(param_size, num_param_blobs)
@@ -469,7 +469,9 @@ Dtype Net<Dtype>::ForwardFromTo(int start, int end) {
     }
   }
   for (int i = start; i <= end; ++i) {
-    // LOG(ERROR) << "Forwarding " << layer_names_[i];
+#ifdef XEON_PHI_DEBUG
+    LOG(ERROR) << "XEON: Forwarding " << layer_names_[i];
+#endif
     layers_[i]->Reshape(bottom_vecs_[i], top_vecs_[i]);
     Dtype layer_loss = layers_[i]->Forward(bottom_vecs_[i], top_vecs_[i]);
     loss += layer_loss;

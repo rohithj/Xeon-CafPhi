@@ -129,6 +129,7 @@ template <typename Dtype>
 Solver<Dtype>* GetSolver(const SolverParameter& param) {
   SolverParameter_SolverType type = param.solver_type();
 
+  LOG(INFO) << "XEON: Solver type: " << type;
   switch (type) {
   case SolverParameter_SolverType_SGD:
       return new SGDSolver<Dtype>(param);

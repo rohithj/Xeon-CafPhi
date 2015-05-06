@@ -16,6 +16,15 @@ void im2col_cpu(const Dtype* data_im, const int channels,
   int height_col = (height + 2 * pad_h - kernel_h) / stride_h + 1;
   int width_col = (width + 2 * pad_w - kernel_w) / stride_w + 1;
   int channels_col = channels * kernel_h * kernel_w;
+#if XEON_PHI_ESSENTIAL_DEBUG
+  LOG(INFO)<<"\t\t\tim2col:channels="<< channels <<" h="<< height;
+  LOG(INFO)<<"\t\t\t       w="<< width <<" kernel_h="<< kernel_h;
+  LOG(INFO)<<"\t\t\t       kernel_w="<< kernel_w <<" pad_h="<< pad_h;
+  LOG(INFO)<<"\t\t\t       pad_w="<< pad_w <<" stride_h="<< stride_h;
+  LOG(INFO)<<"\t\t\t       stride_w="<< stride_w;
+  LOG(INFO)<<"\t\t\t       h_col="<< height_col <<" w_col="<< width_col;
+  LOG(INFO)<<"\t\t\t       channels_col="<< channels_col << "\n";
+#endif
   for (int c = 0; c < channels_col; ++c) {
     int w_offset = c % kernel_w;
     int h_offset = (c / kernel_w) % kernel_h;
@@ -29,6 +38,10 @@ void im2col_cpu(const Dtype* data_im, const int channels,
             data_im[(c_im * height + h_pad) * width + w_pad];
         else
           data_col[(c * height_col + h) * width_col + w] = 0;
+#if 0
+	LOG(INFO)<<"\tRes="<<(c * height_col + h) * width_col + w <<
+		   " src=" <<(c_im * height + h_pad) * width + w_pad;
+#endif
       }
     }
   }

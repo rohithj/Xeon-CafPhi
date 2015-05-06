@@ -46,6 +46,11 @@ class BaseConvolutionLayer : public Layer<Dtype> {
   void weight_cpu_gemm(const Dtype* input, const Dtype* output, Dtype*
       weights);
   void backward_cpu_bias(Dtype* bias, const Dtype* input);
+#ifdef XEON_PHI
+  void forward_convolution(const Dtype* input, const Dtype* weight,
+      Dtype* output);
+  void forward_bias(Dtype* output, const Dtype* bias);
+#endif
 
 #ifndef CPU_ONLY
   void forward_gpu_gemm(const Dtype* col_input, const Dtype* weights,

@@ -9,6 +9,9 @@ namespace caffe {
 template <typename Dtype>
 void ReLULayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
     const vector<Blob<Dtype>*>& top) {
+#ifdef XEON_PHI_DEBUG  
+  LOG(INFO) << "relu_layer.cpp: Forward_cpu";
+#endif
   const Dtype* bottom_data = bottom[0]->cpu_data();
   Dtype* top_data = top[0]->mutable_cpu_data();
   const int count = bottom[0]->count();

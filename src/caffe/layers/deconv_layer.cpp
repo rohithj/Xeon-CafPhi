@@ -61,15 +61,19 @@ void DeconvolutionLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
       for (int n = 0; n < this->num_; ++n) {
         // Gradient w.r.t. weight. Note that we will accumulate diffs.
         if (this->param_propagate_down_[0]) {
+	  LOG(INFO)<<"\t\t\tCHECK END 1";
           this->weight_cpu_gemm(top_diff + top[i]->offset(n),
               bottom_data + bottom[i]->offset(n), weight_diff);
+	  LOG(INFO)<<"\t\t\tCHECK END 1";
         }
         // Gradient w.r.t. bottom data, if necessary, reusing the column buffer
         // we might have just computed above.
         if (propagate_down[i]) {
+	  LOG(INFO)<<"\t\t\tCHECK START 2";
           this->forward_cpu_gemm(top_diff + top[i]->offset(n), weight,
               bottom_diff + bottom[i]->offset(n),
               this->param_propagate_down_[0]);
+	  LOG(INFO)<<"\t\t\tCHECK END 2";
         }
       }
     }

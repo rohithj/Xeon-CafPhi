@@ -58,6 +58,10 @@ void BaseConvolutionLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
   num_output_ = this->layer_param_.convolution_param().num_output();
   CHECK_GT(num_output_, 0);
   group_ = this->layer_param_.convolution_param().group();
+//#ifdef XEON_PHI_ESSENTIAL_DEBUG 
+#if 1
+  LOG(INFO) << "XEON group:" << group_;
+#endif
   CHECK_EQ(channels_ % group_, 0);
   CHECK_EQ(num_output_ % group_, 0)
       << "Number of output should be multiples of group.";
@@ -123,6 +127,11 @@ void BaseConvolutionLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
   // Shape the tops.
   compute_output_shape();
   for (int top_id = 0; top_id < top.size(); ++top_id) {
+#ifdef XEON_PHI_ESSENTIAL_DEBUG 
+    LOG(INFO)<<" \t\tid:"<< top_id <<" num:"<< num_<<" numoutput:"
+	     <<num_output_<<" height:"<<height_out_<<" width_out:"
+	     << width_out_;
+#endif
     top[top_id]->Reshape(num_, num_output_, height_out_, width_out_);
   }
   if (reverse_dimensions()) {
@@ -142,8 +151,16 @@ void BaseConvolutionLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
   // overly large memory usage. In the special case of 1x1 convolution
   // it goes lazily unused to save memory.
   if (reverse_dimensions()) {
+#ifdef XEON_PHI_ESSENTIAL_DEBUG 
+    LOG(INFO)<<"---> Reverse: kdim:"<< kernel_dim_ <<" height:"<< height_<<
+	       " width:"<< width_;
+#endif
     col_buffer_.Reshape(1, kernel_dim_, height_, width_);
   } else {
+#ifdef XEON_PHI_ESSENTIAL_DEBUG 
+    LOG(INFO)<<"---> kdim:"<< kernel_dim_ <<" height:"<< height_out_<<
+	       " width:"<< width_out_;
+#endif
     col_buffer_.Reshape(1, kernel_dim_, height_out_, width_out_);
   }
   // Set up the all ones "bias multiplier" for adding biases by BLAS
@@ -166,6 +183,13 @@ void BaseConvolutionLayer<Dtype>::forward_cpu_gemm(const Dtype* input,
     col_buff = col_buffer_.cpu_data();
   }
   for (int g = 0; g < group_; ++g) {
+
+#ifdef XEON_PHI_ESSENTIAL_DEBUG 
+    LOG(INFO)<<"---->M:"<<conv_out_channels_/group_<<" N:"<<
+      conv_out_spatial_dim_<<" K:"<< kernel_dim_ / group_<<" alpha:1"
+      <<" beta:0";
+#endif
+    
     caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, conv_out_channels_ /
         group_, conv_out_spatial_dim_, kernel_dim_ / group_,
         (Dtype)1., weights + weight_offset_ * g, col_buff + col_offset_ * g,
@@ -176,6 +200,12 @@ void BaseConvolutionLayer<Dtype>::forward_cpu_gemm(const Dtype* input,
 template <typename Dtype>
 void BaseConvolutionLayer<Dtype>::forward_cpu_bias(Dtype* output,
     const Dtype* bias) {
+
+#ifdef XEON_PHI_ESSENTIAL_DEBUG 
+  LOG(INFO)<<"\t\t\t\t---->M:"<<num_output_<<" N:"<<(height_out_ * width_out_)<<
+	" K:1 alpha:1 beta:1";
+#endif
+
   caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, num_output_,
       height_out_ * width_out_, 1, (Dtype)1., bias, bias_multiplier_.cpu_data(),
       (Dtype)1., output);
@@ -221,6 +251,83 @@ void BaseConvolutionLayer<Dtype>::backward_cpu_bias(Dtype* bias,
   caffe_cpu_gemv<Dtype>(CblasNoTrans, num_output_, height_out_ * width_out_, 1.,
       input, bias_multiplier_.cpu_data(), 1., bias);
 }
+
+
+#ifdef XEON_PHI
+
+/* Perform convolution using for loops */
+template <typename Dtype>
+void BaseConvolutionLayer<Dtype>::forward_convolution(const Dtype* input,
+    const Dtype* weight, Dtype* output) {
+  int out_height = (conv_in_height_ - kernel_h_) + 1;
+  int out_width = (conv_in_width_ - kernel_w_) + 1;
+
+#ifdef XEON_PHI_ESSENTIAL_DEBUG 
+  LOG(INFO)<<"inChan:"<<conv_in_channels_<<" outChan:"<<
+	     conv_out_channels_<<" height_out:"<<out_height<<
+	     " width_out:"<<out_width<<" kernel_h:"<<kernel_h_<<
+	     " kernel_w:"<<kernel_w_;
+#endif
+  /* For check: REMOVE TODO */
+  conv_im2col_cpu(input, col_buffer_.mutable_cpu_data());
+  
+  /* TODO: what about group? */
+  //for (int g = 0; g < group_; ++g) {
+  /* Loop for number of input channels */
+  for(int inChan = 0; inChan < conv_in_channels_; ++inChan) {
+    /* Loop over all output channels */
+    for(int outChan = 0; outChan < conv_out_channels_; ++outChan) {
+      /* Loop over output image height */
+      for(int h = 0; h < out_height; ++h) {
+	/* Loop over output image width */
+	for(int w = 0; w < out_width; ++w) {
+	  /* Loop over kernel image height */
+	  for(int i = 0; i < kernel_h_; ++i) {
+	    /* Loop over kernel image width */
+	    for(int j = 0; j < kernel_w_; ++j) {
+	      output[outChan * out_height * out_width + h * out_width + w] +=
+	       input[inChan * conv_in_height_ * conv_in_width_ +
+		     (h+i) * conv_in_width_ + (w+j)] *
+	       weight[outChan * kernel_h_ * kernel_w_ + i * kernel_w_ + j];
+	    }
+	  }
+	}
+      }
+    }
+  }
+  //}
+}
+
+/* 
+ * Performing the equivalent of:
+ * output = alpha * bias * input + beta * output
+ * where alpha = beta = 1
+ */
+template <typename Dtype>
+void BaseConvolutionLayer<Dtype>::forward_bias(Dtype* output,
+    const Dtype* bias) {
+  const Dtype* input = bias_multiplier_.cpu_data(); 
+ 
+#ifdef XEON_PHI_ESSENTIAL_DEBUG 
+  LOG(INFO)<<" outChan:"<<conv_out_channels_<<" height_out:"<<
+	     height_out_<<" width_out:"<<width_out_;
+#endif
+
+  /* Loop over all output channels */
+  for(int outChan = 0; outChan < num_output_; ++outChan) {
+    /* Loop over output image height */
+    for(int h = 0; h < height_out_; ++h) {
+      /* Loop over output image width */
+      for(int w = 0; w < width_out_; ++w) {
+	output[outChan * height_out_ * width_out_ + height_out_ * h + w] +=
+	 bias[outChan] * input[h * height_out_ + w];
+      }
+    }
+  }
+}
+
+#endif /* XEON_PHI */
+
 
 #ifndef CPU_ONLY
 
