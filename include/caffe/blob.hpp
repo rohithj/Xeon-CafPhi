@@ -161,6 +161,9 @@ class Blob {
     CHECK_LE(h, height());
     CHECK_GE(width(), 0);
     CHECK_LE(w, width());
+#ifdef XEON_PHI_DEBUG
+    LOG(INFO)<<"offset:"<<((n * channels() + c) * height() + h) * width() + w;
+#endif
     return ((n * channels() + c) * height() + h) * width() + w;
   }
 

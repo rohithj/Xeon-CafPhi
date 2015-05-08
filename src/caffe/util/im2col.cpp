@@ -67,6 +67,15 @@ void col2im_cpu(const Dtype* data_col, const int channels,
   int height_col = (height + 2 * pad_h - patch_h) / stride_h + 1;
   int width_col = (width + 2 * pad_w - patch_w) / stride_w + 1;
   int channels_col = channels * patch_h * patch_w;
+#if XEON_PHI_ESSENTIAL_DEBUG
+  LOG(INFO)<<"\t\tcol2im:channels="<< channels <<" h="<< height;
+  LOG(INFO)<<"\t\t       w="<< width <<" patch_h="<< patch_h;
+  LOG(INFO)<<"\t\t       patch_w="<< patch_w <<" pad_h="<< pad_h;
+  LOG(INFO)<<"\t\t       pad_w="<< pad_w <<" stride_h="<< stride_h;
+  LOG(INFO)<<"\t\t       stride_w="<< stride_w;
+  LOG(INFO)<<"\t\t       h_col="<< height_col <<" w_col="<< width_col;
+  LOG(INFO)<<"\t\t       channels_col="<< channels_col << "\n";
+#endif
   for (int c = 0; c < channels_col; ++c) {
     int w_offset = c % patch_w;
     int h_offset = (c / patch_w) % patch_h;

@@ -58,10 +58,10 @@ void BaseConvolutionLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
   num_output_ = this->layer_param_.convolution_param().num_output();
   CHECK_GT(num_output_, 0);
   group_ = this->layer_param_.convolution_param().group();
-//#ifdef XEON_PHI_ESSENTIAL_DEBUG 
-#if 1
+#ifdef XEON_PHI_ESSENTIAL_DEBUG 
   LOG(INFO) << "XEON group:" << group_;
 #endif
+  CHECK_EQ(group_, 1)<<"ROHITH: Bad assumption";
   CHECK_EQ(channels_ % group_, 0);
   CHECK_EQ(num_output_ % group_, 0)
       << "Number of output should be multiples of group.";
@@ -259,18 +259,16 @@ void BaseConvolutionLayer<Dtype>::backward_cpu_bias(Dtype* bias,
 template <typename Dtype>
 void BaseConvolutionLayer<Dtype>::forward_convolution(const Dtype* input,
     const Dtype* weight, Dtype* output) {
-  int out_height = (conv_in_height_ - kernel_h_) + 1;
-  int out_width = (conv_in_width_ - kernel_w_) + 1;
 
 #ifdef XEON_PHI_ESSENTIAL_DEBUG 
   LOG(INFO)<<"inChan:"<<conv_in_channels_<<" outChan:"<<
-	     conv_out_channels_<<" height_out:"<<out_height<<
-	     " width_out:"<<out_width<<" kernel_h:"<<kernel_h_<<
+	     conv_out_channels_<<" height_out:"<<height_out_<<
+	     " width_out:"<<width_out_<<" kernel_h:"<<kernel_h_<<
 	     " kernel_w:"<<kernel_w_;
 #endif
-  /* For check: REMOVE TODO */
-  conv_im2col_cpu(input, col_buffer_.mutable_cpu_data());
-  
+
+  memset(output, 0, conv_out_channels_ * height_out_ * width_out_ * sizeof(Dtype));
+
   /* TODO: what about group? */
   //for (int g = 0; g < group_; ++g) {
   /* Loop for number of input channels */
@@ -278,17 +276,20 @@ void BaseConvolutionLayer<Dtype>::forward_convolution(const Dtype* input,
     /* Loop over all output channels */
     for(int outChan = 0; outChan < conv_out_channels_; ++outChan) {
       /* Loop over output image height */
-      for(int h = 0; h < out_height; ++h) {
+      for(int h = 0; h < height_out_; ++h) {
 	/* Loop over output image width */
-	for(int w = 0; w < out_width; ++w) {
+	for(int w = 0; w < width_out_; ++w) {
 	  /* Loop over kernel image height */
 	  for(int i = 0; i < kernel_h_; ++i) {
 	    /* Loop over kernel image width */
 	    for(int j = 0; j < kernel_w_; ++j) {
-	      output[outChan * out_height * out_width + h * out_width + w] +=
-	       input[inChan * conv_in_height_ * conv_in_width_ +
-		     (h+i) * conv_in_width_ + (w+j)] *
-	       weight[outChan * kernel_h_ * kernel_w_ + i * kernel_w_ + j];
+
+	      output[outChan * height_out_ * width_out_ + h * width_out_ + w] +=
+	          input[inChan * conv_in_height_ * conv_in_width_ +
+		                   (h+i) * conv_in_width_ + (w+j)] *
+    	                     weight[outChan * conv_in_channels_ * kernel_h_ * kernel_w_ +
+				    inChan * kernel_h_ * kernel_w_ +
+				    i * kernel_w_ + j];
 	    }
 	  }
 	}
@@ -319,8 +320,8 @@ void BaseConvolutionLayer<Dtype>::forward_bias(Dtype* output,
     for(int h = 0; h < height_out_; ++h) {
       /* Loop over output image width */
       for(int w = 0; w < width_out_; ++w) {
-	output[outChan * height_out_ * width_out_ + height_out_ * h + w] +=
-	 bias[outChan] * input[h * height_out_ + w];
+	output[outChan * height_out_ * width_out_ + width_out_ * h + w] +=
+	    bias[outChan] * input[h * width_out_ + w];
       }
     }
   }
