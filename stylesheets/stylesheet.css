@@ -95,6 +95,8 @@ h6 {
 
 p {
   margin: 10px 0 15px 0;
+  text-align: justify; 
+  text-align-last: left;
 }
 
 footer p {
