@@ -1,50 +1,38 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en-us">
   <head>
-    <meta charset='utf-8'>
-    <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <meta name="description" content="Xeon-CafPhi : Caffe deep learning framework - optimized for Xeon Phi">
-
-    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
-
-    <title>Xeon-CafPhi</title>
+    <meta charset="UTF-8">
+    <title>Xeon-CafPhi by rohithj</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
   </head>
-
   <body>
+    <section class="page-header">
+      <h1 class="project-name">Xeon-CafPhi</h1>
+      <h2 class="project-tagline">Caffe deep learning framework - optimized for Xeon Phi</h2>
+      <a href="https://github.com/rohithj/Xeon-CafPhi" class="btn">View on GitHub</a>
+      <a href="https://github.com/rohithj/Xeon-CafPhi/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/rohithj/Xeon-CafPhi/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
 
-    <!-- HEADER -->
-    <div id="header_wrap" class="outer">
-        <header class="inner">
-          <a id="forkme_banner" href="https://github.com/rohithj/Xeon-CafPhi">View on GitHub</a>
+    <section class="main-content">
+      <p><a href="#project-proposal">Project Proposal</a> </p>
 
-          <h1 id="project_title">Xeon-CafPhi</h1>
-          <h2 id="project_tagline">Caffe deep learning framework - optimized for Xeon Phi</h2>
-          <p><h4><a href="#project-proposal">Project Proposal</a> >>
-          <a href="#project-checkpoint">Project Checkpoint</a> >>
-          <a href="#project-report">Project Report</a></h4></p>
+<p><a href="#project-checkpoint">Project Checkpoint</a> </p>
 
-            <section id="downloads">
-              <a class="zip_download_link" href="https://github.com/rohithj/Xeon-CafPhi/zipball/master">Download this project as a .zip file</a>
-              <a class="tar_download_link" href="https://github.com/rohithj/Xeon-CafPhi/tarball/master">Download this project as a tar.gz file</a>
-            </section>
-        </header>
-    </div>
-
-    <!-- MAIN CONTENT -->
-    <div id="main_content_wrap" class="outer">
-      <section id="main_content" class="inner">
+<p><a href="#project-report">Project Report</a></p>
 
 <p>Optimize Caffe deep learning framework on <a href="http://ark.intel.com/products/71992/Intel-Xeon-Phi-Coprocessor-5110P-8GB-1_053-GHz-60-core">Xeon Phi</a>. Optimization will be done by evaluating the performance of CIFAR-10 and MNIST data sets. We also plan to make a detailed analysis on the performance of Caffe on Xeon Phi (with and without GPU support).</p>
-
-<hr>
 
 <hr>
 
 <h2>
 <a id="project-report" class="anchor" href="#project-report" aria-hidden="true"><span class="octicon octicon-link"></span></a>Project Report</h2>
 
-<p>Overall Caffe works in this manner:</p>
+<p><strong>Current Caffe operation in detail</strong></p>
 
 <pre><code>function train()
   for i=1:num_iterations        // take a batch_size of inputs every input
@@ -70,11 +58,11 @@ end
 <p>Then the respective layer’s forward function is called. Since output of previous layer is used in the next layer we must parallelize in the layers only.
 One such parallelizable layer is the convolutional layer which usually takes up 67% of a neural network’s time.</p>
 
-<p>Up until now, we have successfully changed the matrix multiplication of Caffe to a full convolution as mentioned in the checkpoint.</p>
+<p>Up until now, we have <strong>successfully changed the matrix multiplication of Caffe to a full convolution</strong> as mentioned in the checkpoint.</p>
 
-<p>Our theory was that on any hardware accelerator (XeonPhi or GPU) the matrix multiplication method employed by caffe, would not be able to achieve full speedup using parallelism. The reason for this being that they end up memory bound rather than compute bound.</p>
+<p>Our theory was that on any hardware accelerator (XeonPhi or GPU) the matrix multiplication method employed by caffe, would not be able to achieve full speed-up using parallelism. <em>The reason for this being that they end up memory bound rather than compute bound.</em></p>
 
-<p>The pseudo code currently employed by caffe forward convolution layer is:</p>
+<p>The pseudo code currently employed by Caffe forward convolution layer is:</p>
 
 <pre><code>For n inputs in this iteration
     Input2D = Im2col(input3D) // change 3D input to a 2D matrix by taking out all 
@@ -89,12 +77,11 @@ Plus if you went on to perform the above algorithm on different </p>
 <p>We have successfully changed this algorithm to a simple straightforward convolution acting on a single input.</p>
 
 <p><strong>Our algorithm pseudocode:</strong>
-Main thread
-Add n inputs to work pool:
-Wait for threads</p>
+Main thread:
+    Add n inputs to work pool:
+    Wait for threads</p>
 
-<p>Each thread in pool:
-Convolve the image using windowing approach</p>
+<p>Each thread in pool Convolves the image using windowing approach:</p>
 
 <pre><code>for i in 1..Num_Input_Channels
   for o in 1..Num_Output_Channels
@@ -120,7 +107,7 @@ For output since each thread writes on a different output buffer, there shouldn�
 
 <p>We have achieved a speedup on caffe spawning pthreads naively for each input.</p>
 
-<p><img src="https://cloud.githubusercontent.com/assets/5513664/7548314/0c87c96c-f5d2-11e4-80ca-bc2dbbd0968a.JPG" alt="" width="600" height="400"></p>
+<p><img src="https://cloud.githubusercontent.com/assets/5513664/7548314/0c87c96c-f5d2-11e4-80ca-bc2dbbd0968a.JPG" alt=""></p>
 
 <p><strong>Plan Over the Weekend</strong></p>
 
@@ -276,18 +263,16 @@ end
 <li>Friday, May 7: We time our implementation, check for correctness and race the caffe CPU vs GPU implementation.</li>
 <li>If time permits recognise opportunities of parallelism utilised by GPU matrix multiplication method and  try to combine GPU and CPU features on Latedays cluster.</li>
 </ul>
-      </section>
-    </div>
 
-    <!-- FOOTER  -->
-    <div id="footer_wrap" class="outer">
-      <footer class="inner">
-        <p class="copyright">Xeon-CafPhi maintained by <a href="https://github.com/rohithj">rohithj</a></p>
-        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/rohithj/Xeon-CafPhi">Xeon-CafPhi</a> is maintained by <a href="https://github.com/rohithj">rohithj</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
       </footer>
-    </div>
 
-    
+    </section>
 
+  
   </body>
 </html>
+
