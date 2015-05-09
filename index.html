@@ -34,7 +34,33 @@
 <h2>
 <a id="project-report" class="anchor" href="#project-report" aria-hidden="true"><span class="octicon octicon-link"></span></a>Project Report</h2>
 
-<p>Up until now, we have successfully changed the matrix multiplication of caffe to a full convolution as mentioned in the checkpoint.</p>
+<p>Overall Caffe works in this manner:</p>
+
+<pre><code>function train()
+  for i=1:num_iterations        // take a batch_size of inputs every input
+    forward(net)
+    backward(net)
+  end
+end
+
+function test()
+  forward(net)
+end
+</code></pre>
+
+<p>As can be observed, the caffe neural network algorithm is inherently serial and it’s the forward or backward propagation through different layers that is parallelizable.</p>
+
+<pre><code>function forward(net)
+  for i = 1:num_layers-1
+    forward(layer(i), layer(i-1))
+  end
+end
+</code></pre>
+
+<p>Then the respective layer’s forward function is called. Since output of previous layer is used in the next layer we must parallelize in the layers only.
+One such parallelizable layer is the convolutional layer which usually takes up 67% of a neural network’s time.</p>
+
+<p>Up until now, we have successfully changed the matrix multiplication of Caffe to a full convolution as mentioned in the checkpoint.</p>
 
 <p>Our theory was that on any hardware accelerator (XeonPhi or GPU) the matrix multiplication method employed by caffe, would not be able to achieve full speedup using parallelism. The reason for this being that they end up memory bound rather than compute bound.</p>
 
