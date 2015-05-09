@@ -19,11 +19,7 @@
     </section>
 
     <section class="main-content">
-      <p><a href="#project-proposal">Project Proposal</a></p>
-
-<p><a href="#project-checkpoint">Project Checkpoint</a></p>
-
-<p><a href="#project-report">Project Report</a></p>
+      <p><a href="#project-proposal">Project Proposal</a> <a href="#project-checkpoint">Project Checkpoint</a> <a href="#project-report">Project Report</a></p>
 
 <p>Optimize Caffe deep learning framework on <a href="http://ark.intel.com/products/71992/Intel-Xeon-Phi-Coprocessor-5110P-8GB-1_053-GHz-60-core">Xeon Phi</a>. Optimization will be done by evaluating the performance of CIFAR-10 and MNIST data sets. We also plan to make a detailed analysis on the performance of Caffe on Xeon Phi (with and without GPU support).</p>
 
@@ -34,7 +30,67 @@
 <h2>
 <a id="project-report" class="anchor" href="#project-report" aria-hidden="true"><span class="octicon octicon-link"></span></a>Project Report</h2>
 
-<p>Dummy</p>
+<p>Up until now, we have successfully changed the matrix multiplication of caffe to a full convolution as mentioned in the checkpoint.</p>
+
+<p>Our theory was that on any hardware accelerator (XeonPhi or GPU) the matrix multiplication method employed by caffe, would not be able to achieve full speedup using parallelism. The reason for this being that they end up memory bound rather than compute bound.</p>
+
+<p>The pseudo code currently employed by caffe forward convolution layer is:</p>
+
+<pre><code>For n inputs in this iteration
+    Input2D = Im2col(input3D) // change 3D input to a 2D matrix by taking out all 
+    //windows of convolution and putting them in colums
+    cblas_sgemm(input2D, weight) //Use optimized Cblas Sgemm to multiply input 2D with weight matrix
+end
+</code></pre>
+
+<p>The extra memory consumed storing Input2D is what we believe causes hardware accelerators to be memory bound. This has been even stated by the creator of caffe as a price he paid for using cblas_sgemm.
+Plus if you went on to perform the above algorithm on different </p>
+
+<p>We have successfully changed this algorithm to a simple straightforward convolution acting on a single input.</p>
+
+<p><strong>Our algorithm pseudocode:</strong>
+Main thread
+Add n inputs to work pool:
+Wait for threads</p>
+
+<p>Each thread in pool:
+Convolve the image using windowing approach</p>
+
+<pre><code>for i in 1..Num_Input_Channels
+  for o in 1..Num_Output_Channels
+    for h in 1..Image_height
+      for w in 1..Image_width
+        for x in 1..Kernel_height
+          for y in 1..Kernel_width
+            output(o, h, w) += input(i, h+x, w+y) * filter(i, o, x, y)
+          end
+        end
+      end
+    end
+  end
+end
+</code></pre>
+
+<p><strong>(Highly parallelizable 6 for loops left)</strong></p>
+
+<p>Firstly as each thread merely reads from input and weights, there is “no cache invalidation on different cores”
+For output since each thread writes on a different output buffer, there shouldn’t be any invalidation, but still we are planning to put padding in to ensure this. Avoiding invalidation is necessary as each output pixel is written to (no. of input channels x kernel height x kernel width) times. (Even for a small dataset like MNIST this can be of the order of 1250 times)</p>
+
+<p>Our convolution function does not allocate any memory during convolution and uses the input and output buffers directly, we are pretty memory efficient. We expect to use CPU or Xeon-Phi RAM/Cache or GPU shared memory far more efficiently.</p>
+
+<p>We have achieved a speedup on caffe spawning pthreads naively for each input.</p>
+
+<p></p>
+
+<p><strong>Plan Over the Weekend</strong></p>
+
+<p>We are code ready, our algorithm is working.</p>
+
+<p>Dhruv will improve performance for CPU and Rohith will try to optimize Xeon-Phi for the caffe.</p>
+
+<p>CPU and Xeon-Phi has many opportunities for optimizations, like maintaining a thread pool, padding of output arrays, using Cilk, openMP etc. We are currently evaluating this and we are also trying to optimize other regions of code.</p>
+
+<p>Sunday afternoon we will complete our analysis and put our results in the report.</p>
 
 <h2>
 <a id="project-checkpoint" class="anchor" href="#project-checkpoint" aria-hidden="true"><span class="octicon octicon-link"></span></a>Project Checkpoint</h2>
