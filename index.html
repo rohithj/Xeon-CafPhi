@@ -45,13 +45,20 @@
 
 <h3>Performance results</h3>
 
-<p>Base performance results on the latest Caffe code with optimizations using Vector inttinsics and applying Cilk on Forward and Backward passes.</p>
+<p>Base performance results: Below is the comparison between the off-the-shelf Caffe implementation that uses parallelism on optimized CBLAS oprertaions with our parallel implementation in CPU using basic convolution. As can be seen in the graph, our implementation provides a 2x speed-up over the baseline Caffe implementation.</p>
 
-<p><img src="https://cloud.githubusercontent.com/assets/5513664/7553199/8a9bf6ea-f6b6-11e4-81c4-d77d9baebf33.png" alt="" width="600" height="400"></p>
+<p><img src="https://cloud.githubusercontent.com/assets/5513664/7555517/04bc06da-f71c-11e4-9b59-81cf3f9346e6.JPG" alt="" width="600" height="400"></p>
 
-<p>Performance results on the our convolution code with optimizations using Vector inttinsics and applying Cilk on Forward and Backward passes. It can be seen that although the performance is initially poor but it soon catches up with latest optimized convolution code (Authors implemented with gemm)</p>
+<p>Below graph provides the performance of the our implementation with off-the-shelf Caffe implementation on each stage. With basic convolution implemented, our code takes twice as long to complete. Note the off-the-shelf code is already optimized and executes in parallel on CBLAS library. We added parallelism using AVX intrinsics and Cilk and were able to reach the performance of off-the-shelf Caffe implementation. Forward and backward implementation with was achieved by using both Cilk and AVX intrinsics</p>
 
-<p><img src="https://cloud.githubusercontent.com/assets/5513664/7553206/1528ae5c-f6b7-11e4-9798-b9c6209a8b5c.png" alt="" width="600" height="400"></p>
+<p><img src="https://cloud.githubusercontent.com/assets/5513664/7555510/e0e95d16-f71b-11e4-8a03-949eb5028054.JPG" alt="" width="600" height="400"></p>
+
+<p>The reason for this speed-up is that the original code is memory bound as it requires additional memory to store intermediate results. Off-the-shelf code as described by the author operates on one image at a time on CPU (but on all images in a batch in GPUs) because of the additional memory required to store the intermediate matrix results. In our implementation, there are no intermediate results and no additional memory is required. Hence we parallelized the code by performing batch processing in the convolutional layer.</p>
+
+<br/>
+<p><strong>This performance was achieved in CPU with following configuration:</strong></p>
+There are 15 machines in the cluster and each machine is a Two, Six-core Xeon e5-2620 v3 processor, 2.4GHz, 15MB L3 cache, hyoer-threading, AVX-instruction support.
+All test was done on MNIST data set</p>
 
 <br />
 <p> <b><strong>Performance on Xeon-Phi: To Be Updated </strong></b> <p>
@@ -60,6 +67,7 @@
 <br />
 <br />
 
+<hr>
 
 <h3>Current Caffe operation</h3>
 
