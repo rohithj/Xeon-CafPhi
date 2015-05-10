@@ -43,6 +43,24 @@
 <h2>
 <a id="project-report" class="anchor" href="#project-report" aria-hidden="true"><span class="octicon octicon-link"></span></a>Project Report</h2>
 
+<h3>Performance results</h3>
+
+<p>Base performance results on the latest Caffe code with optimizations using Vector inttinsics and applying Cilk on Forward and Backward passes.</p>
+
+<p><img src="https://cloud.githubusercontent.com/assets/5513664/7553199/8a9bf6ea-f6b6-11e4-81c4-d77d9baebf33.png" alt="" width="600" height="400"></p>
+
+<p>Performance results on the our convolution code with optimizations using Vector inttinsics and applying Cilk on Forward and Backward passes. It can be seen that although the performance is initially poor but it soon catches up with latest optimized convolution code (Authors implemented with gemm)</p>
+
+<p><img src="https://cloud.githubusercontent.com/assets/5513664/7553206/1528ae5c-f6b7-11e4-9798-b9c6209a8b5c.png" alt="" width="600" height="400"></p>
+
+<br />
+<p> <b><strong>Performance on Xeon-Phi: To Be Updated </strong></b> <p>
+<p><b><strong>Results are positive. We are about to complete our analysis and will update the results soon </strong></b></p>
+
+<br />
+<br />
+
+
 <h3>Current Caffe operation</h3>
 
 <pre><code>function train()
