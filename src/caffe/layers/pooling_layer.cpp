@@ -130,7 +130,7 @@ void PoolingLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
 template <typename Dtype>
 void PoolingLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top) {
-#ifdef XEON_PHI_ESSENTIAL_DEBUG  
+#ifdef XEON_PHI_ESSENTIAL_DEBUG
   LOG(INFO) << "pooling_layer.cpp: Forward_cpu";
 #endif
   const Dtype* bottom_data = bottom[0]->cpu_data();

@@ -6,6 +6,12 @@
 #include "caffe/util/math_functions.hpp"
 #include "caffe/vision_layers.hpp"
 
+
+#include <pmmintrin.h>
+#include <immintrin.h>
+#include <cilk/cilk.h>
+#include <cilk/reducer.h>
+
 namespace caffe {
 
 template <typename Dtype>
@@ -28,15 +34,26 @@ void ConvolutionLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
     const Dtype* bottom_data = bottom[i]->cpu_data();
     Dtype* top_data = top[i]->mutable_cpu_data();
 
-    for(int n = 0; n < this->num_; ++n) {
-      /* Forward convolution */
-      this->forward_convolution(bottom_data +
-	bottom[i]->offset(n), weight, top_data + top[i]->offset(n));
-      
+    cilk_for(int n = 0; n < this->num_; ++n) {
       if(this->bias_term_) {
-	const Dtype* bias = this->blobs_[1]->cpu_data();
-	this->forward_bias(top_data + top[i]->offset(n), bias);
+        const Dtype* bias = this->blobs_[1]->cpu_data();
+        /* Forward convolution */
+        this->forward_convolution(bottom_data + bottom[i]->offset(n),
+                                  weight,
+                                  top_data + top[i]->offset(n),
+                                  bias);
       }
+      else{
+        this->forward_convolution(bottom_data + bottom[i]->offset(n),
+                                  weight,
+                                  top_data + top[i]->offset(n),
+                                  NULL);
+      }
+
+ //      if(this->bias_term_) {
+        // const Dtype* bias = this->blobs_[1]->cpu_data();
+        // this->forward_bias(top_data + top[i]->offset(n), bias);
+ //      }
     }
   }
 #else
@@ -45,10 +62,10 @@ void ConvolutionLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
     Dtype* top_data = top[i]->mutable_cpu_data();
     for (int n = 0; n < this->num_; ++n) {
       this->forward_cpu_gemm(bottom_data + bottom[i]->offset(n), weight,
-          top_data + top[i]->offset(n));
+          top_data + top[i]->offset(n), n);
       if (this->bias_term_) {
         const Dtype* bias = this->blobs_[1]->cpu_data();
-        this->forward_cpu_bias(top_data + top[i]->offset(n), bias);
+        this->forward_cpu_bias(top_data + top[i]->offset(n), bias, n);
       }
     }
   }
@@ -75,22 +92,24 @@ void ConvolutionLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
     if (this->bias_term_ && this->param_propagate_down_[1]) {
       Dtype* bias_diff = this->blobs_[1]->mutable_cpu_diff();
       for (int n = 0; n < this->num_; ++n) {
-        this->backward_cpu_bias(bias_diff, top_diff + top[i]->offset(n));
+        this->backward_cpu_bias(bias_diff, top_diff + top[i]->offset(n), n);
       }
     }
     if (this->param_propagate_down_[0] || propagate_down[i]) {
-      for (int n = 0; n < this->num_; ++n) {
+
         // gradient w.r.t. weight. Note that we will accumulate diffs.
         if (this->param_propagate_down_[0]) {
+          cilk_for (int n = 0; n < this->num_; ++n)
           this->weight_cpu_gemm(bottom_data + bottom[i]->offset(n),
-              top_diff + top[i]->offset(n), weight_diff);
+              top_diff + top[i]->offset(n), weight_diff, n);
         }
         // gradient w.r.t. bottom data, if necessary.
         if (propagate_down[i]) {
+          cilk_for (int n = 0; n < this->num_; ++n)
           this->backward_cpu_gemm(top_diff + top[i]->offset(n), weight,
-              bottom_diff + bottom[i]->offset(n));
+              bottom_diff + bottom[i]->offset(n), n);
         }
-      }
+
     }
   }
 }

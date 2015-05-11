@@ -264,7 +264,7 @@ else ifneq (,$(findstring g++,$(CXX)))
 	STATIC_LINK_COMMAND := -Wl,--whole-archive $(STATIC_NAME) -Wl,--no-whole-archive
 else
   # The following line must not be indented with a tab, since we are not inside a target
-  $(error Cannot static link with the $(CXX) compiler)
+  #$(error Cannot static link with the $(CXX) compiler)
 endif
 
 # Debugging
@@ -396,7 +396,7 @@ endif
 	py mat py$(PROJECT) mat$(PROJECT) proto runtest \
 	superclean supercleanlist supercleanfiles warn everything
 
-all: $(STATIC_NAME) $(DYNAMIC_NAME) tools examples
+all: $(DYNAMIC_NAME) tools examples
 
 everything: $(EVERYTHING_TARGETS)
 
