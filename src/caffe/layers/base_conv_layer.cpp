@@ -8,8 +8,6 @@
 
 #include <pmmintrin.h>
 #include <immintrin.h>
-#include <cilk/cilk.h>
-#include <cilk/reducer.h>
 
 
 namespace caffe {

@@ -90,6 +90,7 @@ const void* SyncedMemory::gpu_data() {
 #else
   NO_GPU;
 #endif
+  return NULL;
 }
 
 void* SyncedMemory::mutable_cpu_data() {
@@ -106,6 +107,7 @@ void* SyncedMemory::mutable_gpu_data() {
 #else
   NO_GPU;
 #endif
+  return NULL;
 }
 
 

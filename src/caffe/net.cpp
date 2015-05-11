@@ -13,6 +13,7 @@
 #include "caffe/util/io.hpp"
 #include "caffe/util/math_functions.hpp"
 #include "caffe/util/upgrade_proto.hpp"
+#include "caffe/CycleTimer.h"
 
 #include "caffe/test/test_caffe_main.hpp"
 
@@ -473,7 +474,23 @@ Dtype Net<Dtype>::ForwardFromTo(int start, int end) {
     LOG(ERROR) << "XEON: Forwarding " << layer_names_[i];
 #endif
     layers_[i]->Reshape(bottom_vecs_[i], top_vecs_[i]);
+
+#ifdef LAYER_TIME
+    double min_cpu_time = 1e30;
+    double startTime = CycleTimer::currentSeconds();
+#endif
+
     Dtype layer_loss = layers_[i]->Forward(bottom_vecs_[i], top_vecs_[i]);
+
+#ifdef LAYER_TIME
+    double endTime = CycleTimer::currentSeconds();
+    if((endTime - startTime) < min_cpu_time)
+      min_cpu_time = endTime - startTime;
+
+    LOG(INFO)<<"\n Time taken for Forward in "<< layer_names_[i] <<
+               " is = " << min_cpu_time * 1000 <<"ms \n";
+#endif
+
     loss += layer_loss;
     if (debug_info_) { ForwardDebugInfo(i); }
   }
@@ -537,8 +554,24 @@ void Net<Dtype>::BackwardFromTo(int start, int end) {
   CHECK_LT(start, layers_.size());
   for (int i = start; i >= end; --i) {
     if (layer_need_backward_[i]) {
+
+#ifdef LAYER_TIME    
+      double min_cpu_time = 1e30;
+      double startTime = CycleTimer::currentSeconds();
+#endif
+
       layers_[i]->Backward(
           top_vecs_[i], bottom_need_backward_[i], bottom_vecs_[i]);
+
+#ifdef LAYER_TIME
+      double endTime = CycleTimer::currentSeconds();
+      if((endTime - startTime) < min_cpu_time)
+        min_cpu_time = endTime - startTime;
+
+      LOG(INFO)<<"\n Time taken for Backward in "<< layer_names_[i] <<
+                 " is = " << min_cpu_time * 1000 <<"ms \n";
+#endif
+    
       if (debug_info_) { BackwardDebugInfo(i); }
     }
   }

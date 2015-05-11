@@ -306,6 +306,10 @@ ifeq ($(XEON_PHI_DEBUG), 1)
 	COMMON_FLAGS += -DXEON_PHI_DEBUG
 endif
 
+ifeq ($(LAYER_TIME), 1)
+	COMMON_FLAGS += -DLAYER_FLAG
+endif
+
 # Python layer support
 ifeq ($(WITH_PYTHON_LAYER), 1)
 	COMMON_FLAGS += -DWITH_PYTHON_LAYER
