@@ -205,12 +205,14 @@ ul, ol, dl {
 ul {
   list-style-position: inside;
   list-style: disc;
+  text-align: justify; 
   padding-left: 20px;
 }
 
 ol {
   list-style-position: inside;
   list-style: decimal;
+  text-align: justify; 
   padding-left: 20px;
 }
 

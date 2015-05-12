@@ -37,7 +37,7 @@
       <section id="main_content" class="inner">
 
 <h2>Summary</h2>
-<p>Optimize Caffe deep learning framework on CPU and <a href="http://ark.intel.com/products/71992/Intel-Xeon-Phi-Coprocessor-5110P-8GB-1_053-GHz-60-core">Xeon Phi</a>. We provide a highly parallelizable convolution implementation that provides 4x performance over off-the-shelf Caffe implementation on CPU. Optimization was done by evaluating the performance of MNIST data set. Caffe on Xeon-Phi provided comparable results with CPU for smaller images, But provides nearly 3x performance for large images. We were unable to completely run Caffe on Xeon-Phi due to library loading issues but were able to offload a part (forward convolution) of the computation to Xeon-Phi for evaluation.</p>
+<p>Optimize Caffe deep learning framework on CPU and <a href="http://ark.intel.com/products/71992/Intel-Xeon-Phi-Coprocessor-5110P-8GB-1_053-GHz-60-core">Xeon Phi</a>. We provide a highly parallelizable convolution implementation that is capable of providing over 4x speed-up over off-the-shelf Caffe implementation on CPU, if backward convolution is also changed to our method. We achieved this by removing the memory bound on Caffe implementation and thereby exposing another axis of parallelism. Optimization was done by evaluating the performance of MNIST data set. Caffe on Xeon-Phi provided comparable results with CPU for smaller images, But provides nearly 3x performance for large images. We were unable to completely run Caffe on Xeon-Phi due to library loading issues but were able to offload a part (forward convolution) of the computation to Xeon-Phi for evaluation.</p>
 
 <hr>
 <hr>
@@ -56,7 +56,7 @@
 
 <p><strong>Caffe operates in the following way:</strong></p>
 
-<p><img src="https://cloud.githubusercontent.com/assets/7463041/7578305/627878ca-f821-11e4-9752-33743c9d3ab2.JPG" alt=""></p>
+<p><img src="https://cloud.githubusercontent.com/assets/5513664/7580294/4626cd06-f840-11e4-8553-35c152c27e3a.JPG" alt=""></p>
 
 <br/>
 
@@ -86,7 +86,7 @@
 <p><strong>Forward Convolution Function</strong></p>
 <p>Looking at the Caffe’s implementation of the convolution layer, we noticed the following:</p>
 
-<p><img src="https://cloud.githubusercontent.com/assets/5513664/7579677/6d7eb9f0-f835-11e4-8911-d3086813ef68.png" alt=""></p>
+<p><img src="https://cloud.githubusercontent.com/assets/5513664/7580336/67d4a24c-f841-11e4-9e52-a44796528ee5.JPG" alt=""></p>
 
 
 <p>Caffe implementation actually changes the convolution windows into columns of a matrix, then it takes up those columns and does a matrix multiplication with the weight vector. This results in the convolved image.</p>
@@ -120,7 +120,7 @@ end
 
 <p><img src="https://cloud.githubusercontent.com/assets/7463041/7578312/9112ddec-f821-11e4-867a-84f6f774a289.JPG" alt=""></p>
 
-<p>Above graph provides the performance of the our implementation with off-the-shelf Caffe implementation on each stage. With basic convolution implemented, our code takes twice as long to complete. Note that off-the-shelf code is already optimized and executes in parallel on CBLAS library. We added parallelism using AVX intrinsics and Cilk and were able to beat the performance of off-the-shelf Caffe implementation.</p>
+<p>Above graph provides the performance of the our implementation with off-the-shelf Caffe implementation on each stage. With basic convolution implemented, our code takes twice as long to complete. Note that off-the-shelf code is already optimized and executes in parallel on CBLAS library. We added parallelism using AVX intrinsics and Cilk and were able to beat the performance of off-the-shelf Caffe implementation. Thus we have also used data parallel model of parallelism in our implementation.</p>
 
 <p>As seen in the last section of the graph, the time taken for off-the-shelf is reduced to 37ms. This was done by modifying the off-the-shelf code to allocate enough buffer to hold all the images in a batch. Off-the-shelf code as described by the author operates on one image at a time on CPU (but on all images in a batch in GPUs) because of the additional memory required to store the intermediate matrix results. In our implementation, there are no intermediate results and hence no additional memory is required. Hence we parallelized the code by performing batch processing in the convolutional layer.</p>
 
@@ -130,12 +130,12 @@ end
 <p><img src="https://cloud.githubusercontent.com/assets/7463041/7578299/436f7ba4-f821-11e4-9e93-b05d630b6014.jpg" alt=""></p>
 
 <br />
-<p><em><strong>Our conclusion from this performance analysis is that with parallel batch processing in basic convolution it can provide over 4x the performance of the native off-the-shelf implementation.</strong></em></p>
+<p><em><strong>Our conclusion from this performance analysis is that with parallel batch processing on basic convolution (shared model of parallelism) and removing additional buffer in forward and backward convolution, We can provide over 4x the performance over native off-the-shelf implementation.</strong></em></p>
 
 
 <br/>
 <p> <h3>Performance results on Xeon-Phi: </h3> </p>
-<p> We are using 1 Xeon Phi 5110p co-processor board with 60 cores with AVX512 support and the board has 8 GB RAM. Caffe can take advantage of this parallellism to run high computation jobs on Xeon-Phi. There are two ways to do it:
+<p> In Xeon Phi, Caffe can take advantage of parallellism on cores and/or SIMD units to run high computation jobs. There are two ways to do it:
 <ol>
   <li><strong>Run Caffe with Xeon-Phi as host:</strong> The complete Caffe code can be loaded onto Xeon-Phi and can be run on it. This has the overhead of loading all the assosiated libraries like glog, gflags, protobuf and other associated libraries. We had issues with loading the necessary libraries onto Xeon-Phi. We discussed with the course staff and they also could not load libraries, hence we agreed to only offload part of computation to evaluate performance.
   </li>
@@ -266,15 +266,13 @@ end
 <p>We intend to parallelize this implementation by using ISPC, openMP and Pthreads and based on analysis determine which combination of choices at appropriate loops give us the best performance for MNIST and CIFAR-10 data sets. This will require detailed analysis and evaluation.</p>
 
 <p>Following references helped us analyze and understand convolution:</p>
-
-<p><a href="https://github.com/Yangqing/caffe/wiki/Convolution-in-Caffe:-a-memo">Convolution in Caffe</a></p>
-
-<p><a href="http://yann.lecun.com/exdb/lenet/">LeNet-5, convolutional neural networks</a></p>
-
-<p><a href="http://www.wikiwand.com/en/Convolution">Convolution in Wikipedia</a></p>
-
+<ul>
+  <li><a href="https://github.com/Yangqing/caffe/wiki/Convolution-in-Caffe:-a-memo">Convolution in Caffe</a></li>
+  <li><a href="http://yann.lecun.com/exdb/lenet/">LeNet-5, convolutional neural networks</a></li>
+  <li><a href="http://www.wikiwand.com/en/Convolution">Convolution in Wikipedia</a></li>
+</ul>
+<br \>
 <hr>
-
 <hr>
 
 <h2>
