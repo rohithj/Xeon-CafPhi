@@ -20,6 +20,7 @@
 
           <h1 id="project_title">Xeon-CafPhi</h1>
           <h2 id="project_tagline">Caffe deep learning framework - optimized for Xeon Phi</h2>
+          <p><h5 align="right"><font color="white">By: Rohith Jagannathan, Dhruv Saksena</font></h5></p>
           <p><h4><a href="#project-proposal">Project Proposal</a> >>
           <a href="#project-checkpoint">Project Checkpoint</a> >>
           <a href="#project-report">Project Report</a></h4></p>
@@ -35,89 +36,71 @@
     <div id="main_content_wrap" class="outer">
       <section id="main_content" class="inner">
 
-<p>Optimize Caffe deep learning framework on <a href="http://ark.intel.com/products/71992/Intel-Xeon-Phi-Coprocessor-5110P-8GB-1_053-GHz-60-core">Xeon Phi</a>. Optimization will be done by evaluating the performance of CIFAR-10 and MNIST data sets. We also plan to make a detailed analysis on the performance of Caffe on Xeon Phi (with and without GPU support).</p>
+<h2>Summary</h2>
+<p>Optimize Caffe deep learning framework on CPU and <a href="http://ark.intel.com/products/71992/Intel-Xeon-Phi-Coprocessor-5110P-8GB-1_053-GHz-60-core">Xeon Phi</a>. We provide a highly parallelizable convolution implementation that provides 4x performance over off-the-shelf Caffe implementation on CPU. Optimization was done by evaluating the performance of MNIST data set. Caffe on Xeon-Phi provided comparable results with CPU for smaller images, But provides nearly 3x performance for large images. We were unable to completely run Caffe on Xeon-Phi due to library loading issues but were able to offload a part (forward convolution) of the computation to Xeon-Phi for evaluation.</p>
 
 <hr>
-
+<hr>
 
 <h2>
 <a id="project-report" class="anchor" href="#project-report" aria-hidden="true"><span class="octicon octicon-link"></span></a>Project Report</h2>
 
-<h3>Performance results</h3>
+<h3>What is Caffe?</h3>
+<p>Caffe is a Pure C++/CUDA architecture for Deep Learning. The library has been completely written in C++ and CUDA to attain best optimization. </p>
 
-<p>Base performance results: Below is the comparison between the off-the-shelf Caffe implementation that uses parallelism on optimized CBLAS oprertaions with our parallel implementation in CPU using basic convolution. As can be seen in the graph, our implementation provides a 2x speed-up over the baseline Caffe implementation.</p>
+<p>Caffe is used every day by data scientists and researchers to train neural networks to have a machine classify data. It deploys a supervised machine learning technique, therefore, it has a training phase and a testing phase. </p>
 
-<p><img src="https://cloud.githubusercontent.com/assets/5513664/7555517/04bc06da-f71c-11e4-9b59-81cf3f9346e6.JPG" alt="" width="600" height="400"></p>
+<p><img src="https://cloud.githubusercontent.com/assets/7463041/7578303/59e97f06-f821-11e4-8627-e6bc1cace9b3.JPG" alt=""></p>
 
-<p>Below graph provides the performance of the our implementation with off-the-shelf Caffe implementation on each stage. With basic convolution implemented, our code takes twice as long to complete. Note the off-the-shelf code is already optimized and executes in parallel on CBLAS library. We added parallelism using AVX intrinsics and Cilk and were able to reach the performance of off-the-shelf Caffe implementation. Forward and backward implementation with was achieved by using both Cilk and AVX intrinsics</p>
+<p>Caffe uses a convolutional neural network, it takes as input images or data in 2D and labels them. It propagates through the network, convolving weights with the input in different layers to give out the output label probabilities. During training we know the true label and we use that to calculate the discrepancy (loss). We take this loss (derivative) back through the network, updating the weights.</p>
 
-<p><img src="https://cloud.githubusercontent.com/assets/5513664/7555510/e0e95d16-f71b-11e4-8a03-949eb5028054.JPG" alt="" width="600" height="400"></p>
+<p><strong>Caffe operates in the following way:</strong></p>
 
-<p>The reason for this speed-up is that the original code is memory bound as it requires additional memory to store intermediate results. Off-the-shelf code as described by the author operates on one image at a time on CPU (but on all images in a batch in GPUs) because of the additional memory required to store the intermediate matrix results. In our implementation, there are no intermediate results and no additional memory is required. Hence we parallelized the code by performing batch processing in the convolutional layer.</p>
+<p><img src="https://cloud.githubusercontent.com/assets/7463041/7578305/627878ca-f821-11e4-9752-33743c9d3ab2.JPG" alt=""></p>
 
 <br/>
-<p><strong>This performance was achieved in CPU with following configuration:</strong></p>
-There are 15 machines in the cluster and each machine is a Two, Six-core Xeon e5-2620 v3 processor, 2.4GHz, 15MB L3 cache, hyoer-threading, AVX-instruction support.
-All test was done on MNIST data set</p>
+
+<h3>Why do we wish to parallelize it? </h3>
+<p>Training a modern neural network model takes days. For a data scientist while changing parameters it would be helpful to complete a bit quicker.</p>
+<p>Caffe is already parallelized using the Cblas library on CPU or the Cublas library on GPU. The Cblas library is written in Fortran language, which is optimized for arithmetic operations, moreover, Cblas internally applies SIMD sse/avx intrinsics to achieve the data parallel model of parallelism. </p>
+
+
+<br/>
+<h3><p><strong>Operating environment:</strong></p></h3>
+<p><strong>CPU</strong>: There are 15 machines in the cluster and each machine is a Two, Six-core Xeon e5-2620 v3 processor, 2.4GHz, 15MB L3 cache, hyoer-threading, AVX-instruction support. </p>
+<p><strong>Xeon Phi</strong>: One Xeon Phi 5110p co-processor board with 60 cores each operating at 1 GHz and provides 4-threads per core. The board has 8GB RAM and has AVX512 ("16-wide") instruction support.</p>
+<p><strong>Data Set:</strong> All test was done on MNIST data set</p>
+<br />
+
+<h3>Doing better than off-the-shelf Caffe on CPU</h3>
+
+<p>In order to improve the parallelism offered by Caffe we decided to first take time measurements of different layers, this exercise was aimed at exposing the layer we were to attack and which would best benefit the Caffe as a whole by our efforts to parallelize it.</p>
+
+<p>We used the cycletimer.h header file to measure layer timings, we measured separately the forward and backward propagation of all the layers in the network. </p>
+
+<p><img src="https://cloud.githubusercontent.com/assets/7463041/7578309/7b69de50-f821-11e4-9250-f784aa0d1ace.JPG" alt=""></p>
+
+<p>Our measurements clearly show the convolution layer taking a major chunk of the time taken per iteration of the forward, backward and we used this information to focus our attention on the forward convolution function.</p>
 
 <br />
-<p> <b><strong>Performance on Xeon-Phi: To Be Updated </strong></b> <p>
-<p><b><strong>Results are positive. We are about to complete our analysis and will update the results soon </strong></b></p>
+<p><strong>Forward Convolution Function</strong></p>
+<p>Looking at the Caffe’s implementation of the convolution layer, we noticed the following:</p>
 
-<br />
-<br />
+<p><img src="https://cloud.githubusercontent.com/assets/5513664/7579677/6d7eb9f0-f835-11e4-8911-d3086813ef68.png" alt=""></p>
 
-<hr>
 
-<h3>Current Caffe operation</h3>
+<p>Caffe implementation actually changes the convolution windows into columns of a matrix, then it takes up those columns and does a matrix multiplication with the weight vector. This results in the convolved image.</p>
 
-<pre><code>function train()
-  for i=1:num_iterations        // take a batch_size of inputs every input
-    forward(net)
-    backward(net)
-  end
-end
+<p>We can clearly see 2 overheads of this method:</p>
+<ol>
+  <li>Firstly that we need to allocate a buffer to store the results of im2col operation. (Memory bound) </li>
+  <li>Second, we have an overhead of computing the im2col operation. </li>
+</ol>
 
-function test()
-  forward(net)
-end
-</code></pre>
+<p>The original writer of caffe saw cblas or cublas library’s capability to multiply the matrices efficiently as an opportunity and changed the issue of writing a parallelized code by himself. In our implementation, we do the convolution as is as shown below, and thus without an im2col operation, our method requires no buffer to store its results.</p>
 
-<p>As can be observed, the caffe neural network algorithm is inherently serial and it’s the forward or backward propagation through different layers that is parallelizable.</p>
-
-<pre><code>function forward(net)
-  for i = 1:num_layers-1
-    forward(layer(i), layer(i-1))
-  end
-end
-</code></pre>
-
-<p>Then the respective layer’s forward function is called. Since output of previous layer is used in the next layer we must parallelize in the layers only. One such parallelizable layer is the convolutional layer which usually takes up 67% of a neural network’s time.</p>
-
-<p>Up until now, we have <b><strong>successfully changed the matrix multiplication of Caffe to a full convolution as mentioned in the checkpoint</strong></b>.</p>
-
-<p>Our theory was that on any hardware accelerator (XeonPhi or GPU) the matrix multiplication method employed by caffe, would not be able to achieve full speedup using parallelism. <i><em>The reason for this being that they end up memory bound rather than compute bound</em></i>.</p>
-
-<p>The pseudo code currently employed by caffe forward convolution layer is:</p>
-
-<pre><code>For n inputs in this iteration
-    Input2D = Im2col(input3D) // change 3D input to a 2D matrix by taking out all 
-    //windows of convolution and putting them in colums
-    cblas_sgemm(input2D, weight) //Use optimized Cblas Sgemm to multiply input 2D with weight matrix
-end
-</code></pre>
-
-<p>The extra memory consumed storing Input2D is what we believe causes hardware accelerators to be memory bound. This has been even stated by the creator of caffe as a price he paid for using cblas_sgemm. Plus if you went on to perform the above algorithm on different. We have successfully changed this algorithm to a simple straightforward convolution acting on a single input.</p>
-
-<h3>Our algorithm pseudocode:</h3>
-<p>Main thread
-Add n inputs to work pool:
-Wait for threads</p>
-
-<p>Each thread in pool:
-Convolve the image using windowing approach</p>
-
-<pre><code>for i in 1..Num_Input_Channels
+<pre><code>
+for i in 1..Num_Input_Channels
   for o in 1..Num_Output_Channels
     for h in 1..Image_height
       for w in 1..Image_width
@@ -132,28 +115,81 @@ Convolve the image using windowing approach</p>
 end
 </code></pre>
 
-<p><strong>(Highly parallelizable 6 for loops left)</strong></p>
+<br />
+<h3>Performance results on CPU</h3>
 
-<p>Firstly as each thread merely reads from input and weights, there is “no cache invalidation on different cores”
-For output since each thread writes on a different output buffer, there shouldn’t be any invalidation, but still we are planning to put padding in to ensure this. Avoiding invalidation is necessary as each output pixel is written to (no. of input channels x kernel height x kernel width) times. (Even for a small dataset like MNIST this can be of the order of 1250 times)</p>
+<p><img src="https://cloud.githubusercontent.com/assets/7463041/7578312/9112ddec-f821-11e4-867a-84f6f774a289.JPG" alt=""></p>
 
-<p>Our convolution function does not allocate any memory during convolution and uses the input and output buffers directly, we are pretty memory efficient. We expect to use CPU or Xeon-Phi RAM/Cache or GPU shared memory far more efficiently.</p>
+<p>Above graph provides the performance of the our implementation with off-the-shelf Caffe implementation on each stage. With basic convolution implemented, our code takes twice as long to complete. Note that off-the-shelf code is already optimized and executes in parallel on CBLAS library. We added parallelism using AVX intrinsics and Cilk and were able to beat the performance of off-the-shelf Caffe implementation.</p>
 
-<p>We have achieved a speedup on caffe spawning pthreads naively for each input.</p>
+<p>As seen in the last section of the graph, the time taken for off-the-shelf is reduced to 37ms. This was done by modifying the off-the-shelf code to allocate enough buffer to hold all the images in a batch. Off-the-shelf code as described by the author operates on one image at a time on CPU (but on all images in a batch in GPUs) because of the additional memory required to store the intermediate matrix results. In our implementation, there are no intermediate results and hence no additional memory is required. Hence we parallelized the code by performing batch processing in the convolutional layer.</p>
 
-<p><img src="https://cloud.githubusercontent.com/assets/5513664/7548314/0c87c96c-f5d2-11e4-80ca-bc2dbbd0968a.JPG" alt="" width="600" height="400"></p>
 
-<h3>Plan Over the Weekend</h3>
+<p>This additional memory has huge implications as shown in the graph below: Thus with increasing kernel and image sizes, the amount of memory required increases exponentially. </p>
+
+<p><img src="https://cloud.githubusercontent.com/assets/7463041/7578299/436f7ba4-f821-11e4-9e93-b05d630b6014.jpg" alt=""></p>
+
+<br />
+<p><em><strong>Our conclusion from this performance analysis is that with parallel batch processing in basic convolution it can provide over 4x the performance of the native off-the-shelf implementation.</strong></em></p>
+
+
+<br/>
+<p> <h3>Performance results on Xeon-Phi: </h3> </p>
+<p> We are using 1 Xeon Phi 5110p co-processor board with 60 cores with AVX512 support and the board has 8 GB RAM. Caffe can take advantage of this parallellism to run high computation jobs on Xeon-Phi. There are two ways to do it:
+<ol>
+  <li><strong>Run Caffe with Xeon-Phi as host:</strong> The complete Caffe code can be loaded onto Xeon-Phi and can be run on it. This has the overhead of loading all the assosiated libraries like glog, gflags, protobuf and other associated libraries. We had issues with loading the necessary libraries onto Xeon-Phi. We discussed with the course staff and they also could not load libraries, hence we agreed to only offload part of computation to evaluate performance.
+  </li>
+  <li><strong>Offload part of computation to Xeon-Phi</strong>: A part of the computation can be offloaded to Xeon-Phi. Unfortunately, this also required necessary libraries to be available on Xeon-Phi. Hence, as concluded earlier we ran simulation of multiple batches of forward convolution and used this to evaluate the operation on CPU and Xeon-Phi.
+  </li>
+</ol></p>
+
+<p>The offloaded code performs forward convolution on our convolution code with both randomized pixels and images from MNIST. This was evaluated on CPU, Xeon implicit, Xeon explicit and Xeon automatic. The performance is shown in figure below:</p>
+
+<p><img src="https://cloud.githubusercontent.com/assets/5513664/7580155/911e5cb4-f83d-11e4-955e-1825908610af.JPG" alt=""></p>
+
+
+<p>Input 1 simulates the image of MNIST and input 2 simulates larger data set such as ImageNet.</p>
+
+<p>Explicit offload technique is a compiler assisted and gave us the best performance results. This is because we have complete control over where to direct data movement. Based on the convolution operation we launched an a thread for every image using OpenMP. This better utilized the cache and took advantage of locality by keeping a single image data in one processor. </p>
+
+<p>In implicit offload technique both CPU and Xeon-Phi shares memory and runtime manages synchronization. Since we are operating on huge images, the performance of this technique is the worst due to the overhead of synchronizing this data.</p>
+
+<p>In automatic offload technique performs computationally intensive calls on MKL (Math Kernel Library). The MKL manages the details and work division is done across host and MIC. We used the MKL library to offload the CBlas matrix operation as implemented in off-the-shelf Caffe to evaluate its performance. The performance of this techique is not as good as explicit. A good performance is seen for convolution of on low sized images. This is because MKL kicks in only after reaching an appropriate threshold in image size. Example SGEMM(M, N, K) = {2048, 256, 2048}. Out input 1 image size is much smaller than this threshold and hence the computation was done locally on CPU, hence the good performance.</p>
+
+
+<p>Our conclusion from this performance analysis is that an explicit control of parallelism in the hands of the programmer is the best since programmer understands the underlying operation and can determine the best place to parallelize. <em><strong>For a small data set such as MNIST, the performance on Xeon-Phi is comparable with off the shelf Caffe implementation, But for larger image sizes with higher computation power the performance of Xeon explicit is expected to exceed CPU performance by 3x, as seen for input 2.</strong></em></p>
+
+<p>We were constrained on the memory limit of 16GB on Xeon-Phi and also due to limited time we were unable to run our algorithm on CPU and Xeon-Phi for a larger data set such as ImageNet.</p>
+
+<br />
+
+<h3>What we could have done better</h3>
 <ul>
-    <li>We are code ready, our algorithm is working.</li>
-
-    <li>Dhruv will improve performance for CPU and Rohith will try to optimize Xeon-Phi for the caffe.</li>
-
-    <li>CPU and Xeon-Phi has many opportunities for optimizations, like maintaining a thread pool, padding of output arrays, using Cilk, openMP etc. We are currently evaluating this and we are also trying to optimize other regions of code.</li>
-
-    <li>Sunday afternoon we will complete our analysis and put our results in the report.</li>
+  <li>Used a larger data set such as ImageNet. Could have worked around Xeon Phi's 16GB memory limit by operating on part of the data set</li>
+  <li>Able run Caffe on Xeon Phi as host or offload large parts of its computation to Xeon Phi by detecting and resolving the library loading issue.</li>
+  <li>Compare Xeon Phi and GPU on different work loads</li>
 </ul>
 
+<br />
+<h3>References</h3>
+<ul>
+  <li><a href="http://caffe.berkeleyvision.org/">Caffe website</a></li>
+  <li><a href="https://github.com/BVLC/caffe">Caffe off-the-shelf source code</a></li>
+  <li><a href="https://docs.google.com/presentation/d/1UeKXVgRvvxg9OUdh_UiC5G71UMscNPlvArsWER41PsU/preview?sle=true#slide=id.p">Caffe tutorial</a></li>
+  <li><a href="http://caffe.berkeleyvision.org/gathered/examples/mnist.html">MNIST Caffe network</a></li>
+  <li><a href="https://software.intel.com/en-us/articles/intel-xeon-phi-coprocessor-developers-quick-start-guide">Intel Xeon Phi document</a></li>
+  <li><a href="http://cs231n.stanford.edu/reports/fabuzaid_final_report.pdf">Stanford paper</a></li>
+  <li><a href="http://15418.courses.cs.cmu.edu/spring2015/article/12">Xeon Phi on latedays</a></li>
+  <li><a href="https://portal.tacc.utexas.edu/documents/13601/901837/offload_slides_DJ2013-3.pdf/4b27de31-e8c4-4848-b100-c4b670b48148">Xeon Phi offloading</a></li>
+  <li><a href="https://software.intel.com/sites/default/files/managed/26/d6/Intel_Xeon_Phi_Quick_Start_Developers_Guide-MPSS-3.4.pdf">Xeon Phi Intel Manual</a></li>
+  <li><a href="http://www.drdobbs.com/parallel/programming-intels-xeon-phi-a-jumpstart/240144160">Xeon Phi</a></li>
+</ul>
+
+
+<br />
+<br />
+
+<hr>
 <hr>
 
 <h2>
